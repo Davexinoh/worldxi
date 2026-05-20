@@ -862,7 +862,7 @@ function VideoSplash({ onDone }) {
       <video
         ref={videoRef}
         autoPlay muted playsInline
-        src="/worldcup-bg.mp4"
+        src="/ed19dd204b248c32c2992d1c77faaf95.mp4"
         onEnded={onDone}
         onError={() => setTimeout(onDone, 500)}
         style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }}
