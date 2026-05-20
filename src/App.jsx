@@ -872,16 +872,16 @@ function VideoSplash({ onDone }) {
 
   useEffect(() => {
     if (started) {
-      const t = setTimeout(onDone, 55000);
+      const t = setTimeout(onDone, 42000);
       return () => clearTimeout(t);
     }
   }, [started]);
 
   return (
     <div style={{
-      position:"fixed", inset:0, zIndex:999,
-      background:"#000", overflow:"hidden",
-    }}>
+  position:"fixed", inset:0, zIndex:999,
+  background:"#000", overflow:"hidden",
+}} onClick={onDone}>
       <video
         ref={videoRef}
         playsInline
@@ -937,7 +937,7 @@ function VideoSplash({ onDone }) {
           <div style={{ width:120, height:2, background:"rgba(255,255,255,0.12)", borderRadius:99, overflow:"hidden" }}>
             <div style={{
               height:"100%", background:"var(--accent)", borderRadius:99,
-              animation:"splashProgress 49s linear forwards",
+              animation:"splashProgress 42s linear forwards",
             }} />
           </div>
         </div>
