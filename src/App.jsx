@@ -1099,7 +1099,7 @@ export default function WorldXIApp() {
       {/* Waka Waka — loads silently, plays after video */}
       <audio
         ref={bgMusicRef}
-        src="/Shakira - Waka Waka (This Time for Africa) (The Official 2010 FIFA World Cup™ Song).mp3"
+        src="waka-waka.mp3"
         loop
         preload="auto"
       />
