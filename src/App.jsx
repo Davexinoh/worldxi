@@ -846,23 +846,29 @@ function LeaderboardScreen() {
 
 function VideoSplash({ onDone }) {
   const videoRef = useRef(null);
+  const [started, setStarted] = useState(false);
+
+  const handleStart = () => {
+    setStarted(true);
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => onDone());
+    }
+  };
 
   useEffect(() => {
-    const t = setTimeout(onDone, 55000);
-    return () => clearTimeout(t);
-  }, []);
+    if (started) {
+      const t = setTimeout(onDone, 55000);
+      return () => clearTimeout(t);
+    }
+  }, [started]);
 
   return (
-    <div
-      style={{
-        position:"fixed", inset:0, zIndex:999,
-        background:"#000", overflow:"hidden", cursor:"pointer",
-      }}
-      onClick={onDone}
-    >
+    <div style={{
+      position:"fixed", inset:0, zIndex:999,
+      background:"#000", overflow:"hidden",
+    }}>
       <video
         ref={videoRef}
-        autoPlay
         playsInline
         src="/ed19dd204b248c32c2992d1c77faaf95.mp4"
         onEnded={onDone}
@@ -874,23 +880,53 @@ function VideoSplash({ onDone }) {
         background:"linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.3) 100%)",
         zIndex:1, pointerEvents:"none",
       }} />
-      <div style={{
-        position:"absolute", bottom:52, left:"50%",
-        transform:"translateX(-50%)",
-        zIndex:2, display:"flex", flexDirection:"column",
-        alignItems:"center", gap:10, pointerEvents:"none",
-      }}>
-        <div style={{
-          fontSize:11, fontWeight:600, letterSpacing:3,
-          textTransform:"uppercase", color:"rgba(255,255,255,0.5)",
-        }}>Tap anywhere to skip</div>
-        <div style={{ width:120, height:2, background:"rgba(255,255,255,0.12)", borderRadius:99, overflow:"hidden" }}>
+
+      {!started && (
+        <div
+          onClick={handleStart}
+          style={{
+            position:"absolute", inset:0, zIndex:3,
+            display:"flex", flexDirection:"column",
+            alignItems:"center", justifyContent:"center", gap:16,
+            cursor:"pointer",
+          }}
+        >
           <div style={{
-            height:"100%", background:"var(--accent)", borderRadius:99,
-            animation:"splashProgress 49s linear forwards",
-          }} />
+            width:72, height:72, borderRadius:"50%",
+            background:"rgba(0,232,122,0.15)",
+            border:"2px solid var(--accent)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            fontSize:28,
+          }}>▶</div>
+          <div style={{
+            fontSize:11, fontWeight:600, letterSpacing:3,
+            textTransform:"uppercase", color:"rgba(255,255,255,0.6)",
+          }}>Tap to enter</div>
         </div>
-      </div>
+      )}
+
+      {started && (
+        <div
+          onClick={onDone}
+          style={{
+            position:"absolute", bottom:52, left:"50%",
+            transform:"translateX(-50%)",
+            zIndex:2, display:"flex", flexDirection:"column",
+            alignItems:"center", gap:10, cursor:"pointer",
+          }}
+        >
+          <div style={{
+            fontSize:11, fontWeight:600, letterSpacing:3,
+            textTransform:"uppercase", color:"rgba(255,255,255,0.5)",
+          }}>Tap anywhere to skip</div>
+          <div style={{ width:120, height:2, background:"rgba(255,255,255,0.12)", borderRadius:99, overflow:"hidden" }}>
+            <div style={{
+              height:"100%", background:"var(--accent)", borderRadius:99,
+              animation:"splashProgress 49s linear forwards",
+            }} />
+          </div>
+        </div>
+      )}
       <style>{`@keyframes splashProgress { from{width:0%} to{width:100%} }`}</style>
     </div>
   );
