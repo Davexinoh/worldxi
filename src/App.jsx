@@ -863,12 +863,15 @@ function LeaderboardScreen() {
 function VideoSplash({ onDone }) {
   const videoRef = useRef(null);
   const [started, setStarted] = useState(false);
+  const [showSkip, setShowSkip] = useState(false);
 
-  const handleStart = () => {
+  const startVideo = () => {
+    if (started) return;
     setStarted(true);
     if (videoRef.current) {
       videoRef.current.play().catch(() => onDone());
     }
+    setTimeout(() => setShowSkip(true), 3000);
   };
 
   useEffect(() => {
@@ -879,17 +882,26 @@ function VideoSplash({ onDone }) {
   }, [started]);
 
   return (
-    <div style={{
-  position:"fixed", inset:0, zIndex:999,
-  background:"#000", overflow:"hidden",
-}} onClick={onDone}>
+    <div
+      onClick={startVideo}
+      style={{
+        position:"fixed", inset:0, zIndex:999,
+        background:"#000", overflow:"hidden", cursor:"pointer",
+      }}
+    >
       <video
         ref={videoRef}
         playsInline
+        preload="auto"
         src="/ed19dd204b248c32c2992d1c77faaf95.mp4"
         onEnded={onDone}
         onError={() => setTimeout(onDone, 500)}
-        style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }}
+        style={{
+          position:"absolute", inset:0,
+          width:"100%", height:"100%", objectFit:"cover",
+          opacity: started ? 1 : 0,
+          transition: "opacity 0.5s ease",
+        }}
       />
       <div style={{
         position:"absolute", inset:0,
@@ -897,22 +909,19 @@ function VideoSplash({ onDone }) {
         zIndex:1, pointerEvents:"none",
       }} />
 
+      {/* Always visible — tap anywhere to start */}
       {!started && (
-        <div
-          onClick={handleStart}
-          style={{
-            position:"absolute", inset:0, zIndex:3,
-            display:"flex", flexDirection:"column",
-            alignItems:"center", justifyContent:"center", gap:16,
-            cursor:"pointer",
-          }}
-        >
+        <div style={{
+          position:"absolute", inset:0, zIndex:3,
+          display:"flex", flexDirection:"column",
+          alignItems:"center", justifyContent:"center", gap:16,
+        }}>
           <div style={{
-            width:72, height:72, borderRadius:"50%",
+            width:80, height:80, borderRadius:"50%",
             background:"rgba(0,232,122,0.15)",
             border:"2px solid var(--accent)",
             display:"flex", alignItems:"center", justifyContent:"center",
-            fontSize:28,
+            fontSize:32, animation:"pulse 2s ease-in-out infinite",
           }}>▶</div>
           <div style={{
             fontSize:11, fontWeight:600, letterSpacing:3,
@@ -921,13 +930,14 @@ function VideoSplash({ onDone }) {
         </div>
       )}
 
-      {started && (
+      {/* Skip — shows after 3s */}
+      {started && showSkip && (
         <div
-          onClick={onDone}
+          onClick={e => { e.stopPropagation(); onDone(); }}
           style={{
             position:"absolute", bottom:52, left:"50%",
             transform:"translateX(-50%)",
-            zIndex:2, display:"flex", flexDirection:"column",
+            zIndex:3, display:"flex", flexDirection:"column",
             alignItems:"center", gap:10, cursor:"pointer",
           }}
         >
@@ -943,10 +953,13 @@ function VideoSplash({ onDone }) {
           </div>
         </div>
       )}
-      <style>{`@keyframes splashProgress { from{width:0%} to{width:100%} }`}</style>
+      <style>{`
+        @keyframes splashProgress { from{width:0%} to{width:100%} }
+        @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.08);opacity:0.8} }
+      `}</style>
     </div>
   );
-}
+      }
 
 function ConnectScreen({ onConnect }) {
   const [loading, setLoading] = useState(false);
