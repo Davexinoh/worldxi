@@ -123,7 +123,7 @@ function VideoSplash({ onDone }) {
           <div style={{
             fontSize: 11, fontWeight: 600, letterSpacing: 3,
             textTransform: "uppercase", color: "rgba(255,255,255,0.5)",
-          }}>Tap anywhere to skip</div>
+          }}>Tap here to skip</div>
           <div style={{ width: 120, height: 2, background: "rgba(255,255,255,0.12)", borderRadius: 99, overflow: "hidden" }}>
             <div style={{
               height: "100%", background: "var(--accent)", borderRadius: 99,
@@ -149,7 +149,7 @@ function ConnectScreen({ onConnect }) {
     setLoading(true);
     try {
       if (!isOKXWalletInstalled()) {
-        setError("OKX Wallet not found. Install it at okx.com/web3");
+        setError("OKX Wallet not found. Install okx wallet extension");
         setLoading(false);
         return;
       }
@@ -210,14 +210,13 @@ function SetUsernameScreen({ wallet, onDone }) {
     setSaving(true);
     setError("");
     try {
-      setChecking(true);
-      const available = await checkUsernameAvailable(username);
-      setChecking(false);
-      if (!available) {
-        setError("Username taken. Try another.");
-        setSaving(false);
-        return;
-      }
+      // Bypass availability check for testnet stability
+// const available = await checkUsernameAvailable(username);
+// if (!available) {
+//   setError("Username taken. Try another.");
+//   setSaving(false);
+//   return;
+// }
       const txHash = await registerManagerOnchain(username);
       console.log("Manager registered. TX:", txHash);
       onDone(username);
