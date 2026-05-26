@@ -272,13 +272,81 @@ function SetUsernameScreen({ wallet, onDone }) {
           disabled={!isValid}
           style={{
             width: "100%", padding: 12, borderRadius: 6,
+
+  function SetUsernameScreen({ wallet, onDone }) {
+  const [username, setUsername] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const isValid = username.length >= 3 && username.length <= 20 && /^[a-zA-Z0-9_]+$/.test(username);
+
+  const handleSave = async () => {
+    if (!isValid) return;
+    setSaving(true);
+    setError("");
+    try {
+      const txHash = await registerManagerOnchain(username);
+      console.log("Manager registered. TX:", txHash);
+      onDone(username);
+    } catch (err) {
+      setError(err.message || "Transaction failed. Try again.");
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 998,
+      background: "var(--bg)",
+      display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center",
+      padding: 32,
+    }}>
+      <Logo size={56} />
+
+      <div style={{ marginTop: 40, width: "100%", maxWidth: 320 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--grey2)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>
+          Wallet
+        </div>
+        <div style={{
+          padding: 12, borderRadius: 6, background: "rgba(0,232,122,0.05)",
+          border: "1px solid rgba(0,232,122,0.2)",
+          fontSize: 11, fontFamily: "monospace", color: "var(--accent)",
+          marginBottom: 20, wordBreak: "break-all",
+        }}>
+          {wallet}
+        </div>
+
+        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--grey2)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>
+          Manager Name
+        </div>
+        <input
+          type="text"
+          placeholder="3-20 chars (a-z, 0-9, _)"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          style={{
+            width: "100%", padding: 12, borderRadius: 6,
+            border: "1px solid var(--grey2)", background: "var(--bg)",
+            color: "var(--text)", fontSize: 12, marginBottom: 12,
+            boxSizing: "border-box",
+          }}
+        />
+        {error && (
+          <div style={{ fontSize: 11, color: "var(--red)", marginBottom: 12 }}>{error}</div>
+        )}
+        <button
+          onClick={handleSave}
+          disabled={!isValid}
+          style={{
+            width: "100%", padding: 12, borderRadius: 6,
             background: isValid ? "var(--accent)" : "var(--grey2)",
             color: "#000", border: "none", fontSize: 12, fontWeight: 700,
             cursor: isValid ? "pointer" : "not-allowed", opacity: saving ? 0.7 : 1,
             textTransform: "uppercase", letterSpacing: 1,
           }}
         >
-          {checking ? "Checking..." : saving ? "Writing Onchain..." : "Confirm Manager Name"}
+          {saving ? "Writing Onchain..." : "Confirm Manager Name"}
         </button>
       </div>
     </div>
