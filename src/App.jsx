@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef, Component } from "react";
+import { useState, useEffect, useRef, Component, lazy, Suspense } from "react";
 import { connectWallet, getExistingUsername, registerManagerOnchain } from "./wallet.js";
-import SquadBuilder from "./SquadBuilder.jsx";
+
+const SquadBuilder = lazy(() => import("./SquadBuilder.jsx"));
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -123,7 +124,7 @@ function VideoSplash({ onDone }) {
           <div style={{
             fontSize: 11, fontWeight: 600, letterSpacing: 3,
             textTransform: "uppercase", color: "rgba(255,255,255,0.5)",
-          }}>Tap here to skip</div>
+          }}>Tap anywhere to skip</div>
           <div style={{ width: 120, height: 2, background: "rgba(255,255,255,0.12)", borderRadius: 99, overflow: "hidden" }}>
             <div style={{
               height: "100%", background: "var(--accent)", borderRadius: 99,
@@ -367,7 +368,11 @@ function WorldXIAppInner() {
       tabContent = <HomeScreen />;
       break;
     case "squad":
-      tabContent = <SquadBuilder squad={squad} setSquad={setSquad} />;
+      tabContent = (
+        <Suspense fallback={<div style={{ padding: "20px", color: "var(--grey)", textAlign: "center" }}>Loading squad builder...</div>}>
+          <SquadBuilder squad={squad} setSquad={setSquad} />
+        </Suspense>
+      );
       break;
     case "transfers":
       tabContent = <TransfersScreen />;
