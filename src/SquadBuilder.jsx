@@ -42,13 +42,20 @@ export default function SquadBuilder({ squad, setSquad }) {
     if (!player) return;
     if (budgetRemaining < player.price) return;
 
-    // Position slot check
-    const posCount = squad.selectedPlayerIds.filter(id => {
-      const p = findPlayerById(id);
-      return p && p.pos === player.pos;
-    }).length;
-    const posLimit = formation[player.pos.toLowerCase()] || 0;
-    if (posCount >= posLimit) return;
+    // Full squad position limits
+const POSITION_LIMITS = {
+  GK: 2,
+  DEF: 5,
+  MID: 5,
+  FWD: 3,
+};
+
+const posCount = squad.selectedPlayerIds.filter(id => {
+  const p = findPlayerById(id);
+  return p && p.pos === player.pos;
+}).length;
+
+if (posCount >= POSITION_LIMITS[player.pos]) return;
 
     // Nation limit (max 3)
     const nationCount = squad.selectedPlayerIds.filter(id => {
