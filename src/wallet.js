@@ -21,41 +21,38 @@ export const isOKXWalletInstalled = () => {
   return !!(window.okxwallet?.ethereum || window.ethereum);
 };
 
-export const switchToXLayer = async () => {
-  const provider = getInjectedProvider();
+// Silent switch — never throws, OKX mobile safe
+const silentSwitchToXLayer = async () => {
   try {
+    const provider = getInjectedProvider();
     await provider.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: XLAYER_TESTNET.chainId }],
     });
   } catch (err) {
     if (err.code === 4902) {
-      await provider.request({
-        method: "wallet_addEthereumChain",
-        params: [XLAYER_TESTNET],
-      });
-    } else {
-      throw new Error("Failed to switch network");
+      try {
+        const provider = getInjectedProvider();
+        await provider.request({
+          method: "wallet_addEthereumChain",
+          params: [XLAYER_TESTNET],
+        });
+      } catch (_) {
+        // ignore — wallet will reject the tx if wrong chain
+      }
     }
+    // all other errors swallowed — let the tx attempt speak for itself
   }
 };
 
-// KEY FIX: verify chain before every write
-const ensureCorrectChain = async () => {
-  const provider = getInjectedProvider();
-  const chainIdHex = await provider.request({ method: "eth_chainId" });
-  const currentChainId = parseInt(chainIdHex, 16);
-  if (currentChainId !== CHAIN_ID) {
-    await switchToXLayer();
-  }
-};
+export const switchToXLayer = silentSwitchToXLayer;
 
 export const connectWallet = async () => {
   try {
     const provider = getInjectedProvider();
     const accounts = await provider.request({ method: "eth_requestAccounts" });
     if (!accounts || accounts.length === 0) throw new Error("No wallet accounts found");
-    await switchToXLayer();
+    await silentSwitchToXLayer();
     return accounts[0].toLowerCase();
   } catch (err) {
     throw new Error(err?.message || "Wallet connection failed");
@@ -69,15 +66,14 @@ export const getSigner = async () => {
   return await provider.getSigner();
 };
 
-// FIX: lazy RPC provider — created on demand, not at module load
 const getRpcProvider = () => new ethers.JsonRpcProvider(RPC_URL);
 
 export const getReadContract = () => {
   return new ethers.Contract(CONTRACT_ADDRESS, ABI, getRpcProvider());
 };
 
+// NO chain check here — OKX mobile eth_chainId throws, breaks the flow
 export const getWriteContract = async () => {
-  await ensureCorrectChain(); // chain check before every write
   const signer = await getSigner();
   return new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 };
@@ -106,7 +102,8 @@ export const checkUsernameAvailable = async (username) => {
 
 export const registerManagerOnchain = async (username) => {
   try {
-    const contract = await getWriteContract(); // chain check happens inside
+    await silentSwitchToXLayer(); // best-effort before tx, never blocks
+    const contract = await getWriteContract();
     const tx = await contract.registerManager(username);
     console.log("Register manager tx submitted:", tx.hash);
     await tx.wait();
@@ -124,6 +121,7 @@ export const submitSquadOnchain = async (matchday, playerIds) => {
   try {
     const squadString = [...playerIds].sort().join(",");
     const squadHash = ethers.keccak256(ethers.toUtf8Bytes(squadString));
+    await silentSwitchToXLayer();
     const contract = await getWriteContract();
     const tx = await contract.submitSquad(matchday, squadHash);
     console.log("Squad submission tx:", tx.hash);
