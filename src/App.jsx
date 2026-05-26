@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, Component } from "react";
-import { connectWallet, getExistingUsername, registerManagerOnchain, checkUsernameAvailable, isOKXWalletInstalled } from "./wallet.js";
+import { connectWallet, getExistingUsername, registerManagerOnchain } from "./wallet.js";
 import SquadBuilder from "./SquadBuilder.jsx";
 
 class ErrorBoundary extends Component {
@@ -148,11 +148,6 @@ function ConnectScreen({ onConnect }) {
     setError("");
     setLoading(true);
     try {
-      if (!isOKXWalletInstalled()) {
-        setError("OKX Wallet not found. Install okx wallet extension");
-        setLoading(false);
-        return;
-      }
       const address = await connectWallet();
       onConnect(address);
     } catch (err) {
@@ -198,82 +193,6 @@ function ConnectScreen({ onConnect }) {
 }
 
 function SetUsernameScreen({ wallet, onDone }) {
-  const [username, setUsername] = useState("");
-  const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [checking, setChecking] = useState(false);
-
-  const isValid = username.length >= 3 && username.length <= 20 && /^[a-zA-Z0-9_]+$/.test(username);
-
-  const handleSave = async () => {
-    if (!isValid) return;
-    setSaving(true);
-    setError("");
-    try {
-      // Bypass availability check for testnet stability
-// const available = await checkUsernameAvailable(username);
-// if (!available) {
-//   setError("Username taken. Try another.");
-//   setSaving(false);
-//   return;
-// }
-      const txHash = await registerManagerOnchain(username);
-      console.log("Manager registered. TX:", txHash);
-      onDone(username);
-    } catch (err) {
-      setError(err.message || "Transaction failed. Try again.");
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div style={{
-      position: "fixed", inset: 0, zIndex: 998,
-      background: "var(--bg)",
-      display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center",
-      padding: 32,
-    }}>
-      <Logo size={56} />
-
-      <div style={{ marginTop: 40, width: "100%", maxWidth: 320 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--grey2)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>
-          Wallet
-        </div>
-        <div style={{
-          padding: 12, borderRadius: 6, background: "rgba(0,232,122,0.05)",
-          border: "1px solid rgba(0,232,122,0.2)",
-          fontSize: 11, fontFamily: "monospace", color: "var(--accent)",
-          marginBottom: 20, wordBreak: "break-all",
-        }}>
-          {wallet}
-        </div>
-
-        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--grey2)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>
-          Manager Name
-        </div>
-        <input
-          type="text"
-          placeholder="3-20 chars (a-z, 0-9, _)"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          style={{
-            width: "100%", padding: 12, borderRadius: 6,
-            border: "1px solid var(--grey2)", background: "var(--bg)",
-            color: "var(--text)", fontSize: 12, marginBottom: 12,
-            boxSizing: "border-box",
-          }}
-        />
-        {error && (
-          <div style={{ fontSize: 11, color: "var(--red)", marginBottom: 12 }}>{error}</div>
-        )}
-        <button
-          onClick={handleSave}
-          disabled={!isValid}
-          style={{
-            width: "100%", padding: 12, borderRadius: 6,
-
-  function SetUsernameScreen({ wallet, onDone }) {
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -424,18 +343,9 @@ function WorldXIAppInner() {
 
   const handleConnect = async (address) => {
     setWallet(address);
-    const existingUsername = await checkExistingUser(address);
+    const existingUsername = await getExistingUsername(address);
     if (existingUsername) {
       setUsername(existingUsername);
-    }
-  };
-
-  const checkExistingUser = async (address) => {
-    try {
-      const { getExistingUsername } = await import("./wallet.js");
-      return await getExistingUsername(address);
-    } catch {
-      return null;
     }
   };
 
@@ -443,7 +353,6 @@ function WorldXIAppInner() {
     setUsername(name);
   };
 
-  // Render screen based on state
   if (!wallet) {
     return <ConnectScreen onConnect={handleConnect} />;
   }
@@ -452,7 +361,6 @@ function WorldXIAppInner() {
     return <SetUsernameScreen wallet={wallet} onDone={handleUsernameSet} />;
   }
 
-  // Render active tab
   let tabContent;
   switch (activeTab) {
     case "home":
@@ -473,12 +381,10 @@ function WorldXIAppInner() {
 
   return (
     <div style={{ background: "var(--bg)", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      {/* Content */}
       <div style={{ flex: 1, overflowY: "auto", paddingBottom: "70px" }}>
         {tabContent}
       </div>
 
-      {/* Bottom Tab Bar */}
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0,
         height: "60px", background: "var(--bg)", borderTop: "1px solid var(--grey2)",
@@ -509,7 +415,6 @@ function WorldXIAppInner() {
         ))}
       </div>
 
-      {/* Music Toggle */}
       <button
         onClick={() => setMusicPlaying(!musicPlaying)}
         style={{
@@ -519,11 +424,11 @@ function WorldXIAppInner() {
           color: "var(--accent)", fontSize: "16px", cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}
+        title="Toggle music"
       >
         {musicPlaying ? "🔊" : "🔇"}
       </button>
 
-      {/* Background Music */}
       <audio
         ref={audioRef}
         src="/waka-waka.mp3"
