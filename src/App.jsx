@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, Component, lazy, Suspense } from "react";
-import { connectWallet, getExistingUsername, registerManagerOnchain } from "./wallet.js";
+import { connectWallet, getExistingUsername } from "./wallet.js";
 
 const SquadBuilder = lazy(() => import("./SquadBuilder.jsx"));
 
@@ -26,12 +26,23 @@ function Logo({ size = 48, sub = false }) {
         fontSize: size,
         fontWeight: 900,
         letterSpacing: -2,
-        background: "linear-gradient(135deg, var(--accent), rgba(0,232,122,0.6))",
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 2,
         marginBottom: sub ? 8 : 0,
       }}>
-        W⚽RLDXI
+        <span style={{
+          background: "linear-gradient(135deg, var(--accent), rgba(0,232,122,0.6))",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+        }}>W</span>
+        <span style={{ fontSize: size * 0.85, WebkitTextFillColor: "initial" }}>⚽</span>
+        <span style={{
+          background: "linear-gradient(135deg, var(--accent), rgba(0,232,122,0.6))",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+        }}>RLDXI</span>
       </div>
       {sub && (
         <div style={{ fontSize: 10, color: "var(--grey2)", textTransform: "uppercase", letterSpacing: 2 }}>
@@ -205,11 +216,11 @@ function SetUsernameScreen({ wallet, onDone }) {
     setSaving(true);
     setError("");
     try {
-      const txHash = await registerManagerOnchain(username);
-      console.log("Manager registered. TX:", txHash);
+      localStorage.setItem("worldxi_username", username);
+      localStorage.setItem("worldxi_wallet", wallet);
       onDone(username);
     } catch (err) {
-      setError(err.message || "Transaction failed. Try again.");
+      setError(err.message || "Failed. Try again.");
       setSaving(false);
     }
   };
@@ -257,7 +268,7 @@ function SetUsernameScreen({ wallet, onDone }) {
         )}
         <button
           onClick={handleSave}
-          disabled={!isValid}
+          disabled={!isValid || saving}
           style={{
             width: "100%", padding: 12, borderRadius: 6,
             background: isValid ? "var(--accent)" : "var(--grey2)",
@@ -266,17 +277,20 @@ function SetUsernameScreen({ wallet, onDone }) {
             textTransform: "uppercase", letterSpacing: 1,
           }}
         >
-          {saving ? "Writing Onchain..." : "Confirm Manager Name"}
+          {saving ? "Saving..." : "Confirm Manager Name"}
         </button>
       </div>
     </div>
   );
 }
 
-function HomeScreen() {
+function HomeScreen({ username }) {
   return (
     <div style={{ padding: "16px", background: "var(--bg)", minHeight: "100vh" }}>
       <Logo size={48} />
+      <div style={{ marginTop: 16, textAlign: "center", fontSize: 12, color: "var(--grey)" }}>
+        Welcome, <span style={{ color: "var(--accent)", fontWeight: 700 }}>{username}</span>
+      </div>
       <div style={{ marginTop: "32px", fontSize: "12px", color: "var(--grey)", lineHeight: 1.8 }}>
         <div style={{ marginBottom: "20px" }}>
           <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--accent)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: 1 }}>
@@ -322,10 +336,11 @@ function LeaderboardScreen() {
 }
 
 function WorldXIAppInner() {
-  const [wallet, setWallet] = useState(null);
-  const [username, setUsername] = useState(null);
+  // Restore session from localStorage on mount
+  const [wallet, setWallet] = useState(() => localStorage.getItem("worldxi_wallet") || null);
+  const [username, setUsername] = useState(() => localStorage.getItem("worldxi_username") || null);
   const [activeTab, setActiveTab] = useState("home");
-  const [musicPlaying, setMusicPlaying] = useState(true);
+  const [musicPlaying, setMusicPlaying] = useState(false);
   const [squad, setSquad] = useState({
     selectedPlayerIds: [],
     captain: null,
@@ -334,6 +349,7 @@ function WorldXIAppInner() {
 
   const audioRef = useRef(null);
 
+  // Autoplay music — starts muted until user interacts (browser policy)
   useEffect(() => {
     if (musicPlaying && audioRef.current) {
       audioRef.current.play().catch(() => {});
@@ -342,16 +358,45 @@ function WorldXIAppInner() {
     }
   }, [musicPlaying]);
 
+  // If wallet already in localStorage, skip connect screen
+  // but still try to get username from chain as fallback
+  useEffect(() => {
+    const savedWallet = localStorage.getItem("worldxi_wallet");
+    const savedUsername = localStorage.getItem("worldxi_username");
+    if (savedWallet && !savedUsername) {
+      getExistingUsername(savedWallet).then(name => {
+        if (name) {
+          setUsername(name);
+          localStorage.setItem("worldxi_username", name);
+        }
+      }).catch(() => {});
+    }
+  }, []);
+
   const handleConnect = async (address) => {
     setWallet(address);
-    const existingUsername = await getExistingUsername(address);
-    if (existingUsername) {
-      setUsername(existingUsername);
+    localStorage.setItem("worldxi_wallet", address);
+    const localUsername = localStorage.getItem("worldxi_username");
+    if (localUsername) {
+      setUsername(localUsername);
+      return;
     }
+    try {
+      const existingUsername = await getExistingUsername(address);
+      if (existingUsername) {
+        setUsername(existingUsername);
+        localStorage.setItem("worldxi_username", existingUsername);
+      }
+    } catch (_) {}
   };
 
   const handleUsernameSet = (name) => {
     setUsername(name);
+  };
+
+  // Start music when app is ready
+  const handleAppReady = () => {
+    setMusicPlaying(true);
   };
 
   if (!wallet) {
@@ -365,7 +410,7 @@ function WorldXIAppInner() {
   let tabContent;
   switch (activeTab) {
     case "home":
-      tabContent = <HomeScreen />;
+      tabContent = <HomeScreen username={username} />;
       break;
     case "squad":
       tabContent = (
@@ -381,11 +426,14 @@ function WorldXIAppInner() {
       tabContent = <LeaderboardScreen />;
       break;
     default:
-      tabContent = <HomeScreen />;
+      tabContent = <HomeScreen username={username} />;
   }
 
   return (
-    <div style={{ background: "var(--bg)", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div
+      style={{ background: "var(--bg)", minHeight: "100vh", display: "flex", flexDirection: "column" }}
+      onClick={handleAppReady}
+    >
       <div style={{ flex: 1, overflowY: "auto", paddingBottom: "70px" }}>
         {tabContent}
       </div>
@@ -421,7 +469,7 @@ function WorldXIAppInner() {
       </div>
 
       <button
-        onClick={() => setMusicPlaying(!musicPlaying)}
+        onClick={(e) => { e.stopPropagation(); setMusicPlaying(!musicPlaying); }}
         style={{
           position: "fixed", top: "12px", right: "12px", zIndex: 101,
           width: "40px", height: "40px", borderRadius: "50%",
@@ -445,7 +493,15 @@ function WorldXIAppInner() {
 }
 
 export default function App() {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    // Skip splash on reload if already visited
+    return !localStorage.getItem("worldxi_visited");
+  });
+
+  const handleSplashDone = () => {
+    localStorage.setItem("worldxi_visited", "1");
+    setShowSplash(false);
+  };
 
   return (
     <ErrorBoundary>
@@ -463,21 +519,21 @@ export default function App() {
         .btn-accent {
           width: 100%;
           padding: 14px;
-          borderRadius: 8px;
+          border-radius: 8px;
           background: var(--accent);
           color: #000;
           border: none;
-          fontSize: 14px;
-          fontWeight: 700;
-          textTransform: uppercase;
-          letterSpacing: 1px;
+          font-size: 14px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 1px;
           cursor: pointer;
         }
         .btn-accent:hover { opacity: 0.9; }
       `}</style>
 
       {showSplash ? (
-        <VideoSplash onDone={() => setShowSplash(false)} />
+        <VideoSplash onDone={handleSplashDone} />
       ) : (
         <WorldXIAppInner />
       )}
