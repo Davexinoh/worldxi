@@ -177,9 +177,7 @@ function ConnectScreen({ onConnect }) {
       padding: 32,
     }}>
       <Logo size={76} sub={true} />
-
       <div style={{ fontSize: 52, margin: "48px 0", filter: "drop-shadow(0 0 24px rgba(0,232,122,0.2))" }}>🏆</div>
-
       <div style={{ width: "100%", maxWidth: 320 }}>
         <button className="btn-accent" onClick={handleConnect} style={{ opacity: loading ? 0.7 : 1 }}>
           {loading ? "Connecting..." : "Connect OKX Wallet"}
@@ -193,7 +191,6 @@ function ConnectScreen({ onConnect }) {
           Your wallet address is your identity.<br />No email. No password.
         </div>
       </div>
-
       <div style={{
         position: "absolute", bottom: 32,
         fontSize: 11, letterSpacing: 2, textTransform: "uppercase", color: "var(--grey2)",
@@ -234,7 +231,6 @@ function SetUsernameScreen({ wallet, onDone }) {
       padding: 32,
     }}>
       <Logo size={56} />
-
       <div style={{ marginTop: 40, width: "100%", maxWidth: 320 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: "var(--grey2)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>
           Wallet
@@ -247,7 +243,6 @@ function SetUsernameScreen({ wallet, onDone }) {
         }}>
           {wallet}
         </div>
-
         <div style={{ fontSize: 11, fontWeight: 700, color: "var(--grey2)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>
           Manager Name
         </div>
@@ -307,7 +302,6 @@ function HomeScreen({ username }) {
             rgba(0,150,60,0.06) 41px
           )
         `,
-        filter: "blur(0.5px)",
       }} />
       {/* Center circle */}
       <div style={{
@@ -407,93 +401,6 @@ function LeaderboardScreen() {
 }
 
 function WorldXIAppInner() {
-  // Restore session from localStorage on mount
-  const [wallet, setWallet] = useState(() => localStorage.getItem("worldxi_wallet") || null);
-  const [username, setUsername] = useState(() => localStorage.getItem("worldxi_username") || null);
-  const [activeTab, setActiveTab] = useState("home");
-  const [musicPlaying, setMusicPlaying] = useState(false);
-  const [squad, setSquad] = useState({
-    selectedPlayerIds: [],
-    captain: null,
-    viceCaptain: null,
-  });
-
-  const audioRef = useRef(null);
-
-  // Autoplay music — starts muted until user interacts (browser policy)
-  useEffect(() => {
-    if (musicPlaying && audioRef.current) {
-      audioRef.current.play().catch(() => {});
-    } else if (audioRef.current) {
-      audioRef.current.pause();
-    }
-  }, [musicPlaying]);
-
-  // If wallet already in localStorage, skip connect screen
-  // but still try to get username from chain as fallback
-  useEffect(() => {
-    const savedWallet = localStorage.getItem("worldxi_wallet");
-    const savedUsername = localStorage.getItem("worldxi_username");
-    if (savedWallet && !savedUsername) {
-      getExistingUsername(savedWallet).then(name => {
-        if (name) {
-          setUsername(name);
-          localStorage.setItem("worldxi_username", name);
-        }
-      }).catch(() => {});
-    }
-  }, []);
-
-  const handleConnect = async (address) => {
-    setWallet(address);
-    localStorage.setItem("worldxi_wallet", address);
-    const localUsername = localStorage.getItem("worldxi_username");
-    if (localUsername) {
-      setUsername(localUsername);
-      return;
-    }
-    try {
-      const existingUsername = await getExistingUsername(address);
-      if (existingUsername) {
-        setUsername(existingUsername);
-        localStorage.setItem("worldxi_username", existingUsername);
-      }
-    } catch (_) {}
-  };
-
-  const handleUsernameSet = (name) => {
-    setUsername(name);
-  };
-
-  // Start music when app is ready
-  const handleAppReady = () => {
-    setMusicPlaying(true);
-  };
-
-  if (!wallet) {
-    return <ConnectScreen onConnect={handleConnect} />;
-  }
-
-  if (!username) {
-    return <SetUsernameScreen wallet={wallet} onDone={handleUsernameSet} />;
-  }
-
-  let tabContent;
-  switch (activeTab) {
-    case "home":
-      tabContent = <HomeScreen username={username} />;
-      break;
-    case "squad":
-      tabContent = (
-        <Suspense fallback={<div style={{ padding: "20px", color: "var(--grey)", textAlign: "center" }}>Loading squad builder...</div>}>
-          <SquadBuilder squad={squad} setSquad={setSquad} />
-        </Suspense>
-      );
-      break;
-    case "transfers":
-      tabContent = <TransfersScreen />;
-      break;
-function WorldXIAppInner() {
   const [wallet, setWallet] = useState(() => localStorage.getItem("worldxi_wallet") || null);
   const [username, setUsername] = useState(() => localStorage.getItem("worldxi_username") || null);
   const [activeTab, setActiveTab] = useState("home");
@@ -507,16 +414,14 @@ function WorldXIAppInner() {
   const audioRef = useRef(null);
   const musicStarted = useRef(false);
 
-  // Start music once on first render, respecting browser autoplay policy
+  // Start music once after first user interaction
   useEffect(() => {
     if (!musicStarted.current && audioRef.current) {
       musicStarted.current = true;
       audioRef.current.play().then(() => {
         setMusicPlaying(true);
       }).catch(() => {
-        // Browser blocked autoplay — user needs to interact first
         const unlock = () => {
-          if (!musicStarted.current) return;
           audioRef.current?.play().then(() => setMusicPlaying(true)).catch(() => {});
           window.removeEventListener("click", unlock);
         };
@@ -525,6 +430,7 @@ function WorldXIAppInner() {
     }
   }, []);
 
+  // Controlled play/pause — only responds to explicit toggle
   useEffect(() => {
     if (!audioRef.current) return;
     if (musicPlaying) {
@@ -534,6 +440,7 @@ function WorldXIAppInner() {
     }
   }, [musicPlaying]);
 
+  // Restore username from chain if missing
   useEffect(() => {
     const savedWallet = localStorage.getItem("worldxi_wallet");
     const savedUsername = localStorage.getItem("worldxi_username");
@@ -568,17 +475,24 @@ function WorldXIAppInner() {
 
   let tabContent;
   switch (activeTab) {
-    case "home": tabContent = <HomeScreen username={username} />; break;
+    case "home":
+      tabContent = <HomeScreen username={username} />;
+      break;
     case "squad":
       tabContent = (
-        <Suspense fallback={<div style={{ padding: "20px", color: "var(--grey)", textAlign: "center" }}>Loading...</div>}>
+        <Suspense fallback={<div style={{ padding: "20px", color: "var(--grey)", textAlign: "center" }}>Loading squad builder...</div>}>
           <SquadBuilder squad={squad} setSquad={setSquad} />
         </Suspense>
       );
       break;
-    case "transfers": tabContent = <TransfersScreen />; break;
-    case "leaderboard": tabContent = <LeaderboardScreen />; break;
-    default: tabContent = <HomeScreen username={username} />;
+    case "transfers":
+      tabContent = <TransfersScreen />;
+      break;
+    case "leaderboard":
+      tabContent = <LeaderboardScreen />;
+      break;
+    default:
+      tabContent = <HomeScreen username={username} />;
   }
 
   return (
@@ -591,7 +505,8 @@ function WorldXIAppInner() {
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0,
         height: "60px", background: "var(--bg)", borderTop: "1px solid var(--grey2)",
-        display: "flex", justifyContent: "space-around", alignItems: "center", zIndex: 100,
+        display: "flex", justifyContent: "space-around", alignItems: "center",
+        zIndex: 100,
       }}>
         {[
           { id: "home", label: "Home", icon: "🏠" },
@@ -599,13 +514,18 @@ function WorldXIAppInner() {
           { id: "transfers", label: "Transfers", icon: "🔄" },
           { id: "leaderboard", label: "Leaderboard", icon: "🏆" },
         ].map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-            flex: 1, height: "100%", border: "none", background: "transparent",
-            display: "flex", flexDirection: "column", alignItems: "center",
-            justifyContent: "center", gap: "4px", cursor: "pointer",
-            color: activeTab === tab.id ? "var(--accent)" : "var(--grey2)",
-            fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5,
-          }}>
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              flex: 1, height: "100%", border: "none", background: "transparent",
+              display: "flex", flexDirection: "column", alignItems: "center",
+              justifyContent: "center", gap: "4px", cursor: "pointer",
+              color: activeTab === tab.id ? "var(--accent)" : "var(--grey2)",
+              fontSize: "11px", fontWeight: 600, textTransform: "uppercase",
+              letterSpacing: 0.5,
+            }}
+          >
             <div style={{ fontSize: "16px" }}>{tab.icon}</div>
             <div>{tab.label}</div>
           </button>
@@ -629,11 +549,10 @@ function WorldXIAppInner() {
       <audio ref={audioRef} src="/waka-waka.mp3" loop style={{ display: "none" }} />
     </div>
   );
-      }
+}
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(() => {
-    // Skip splash on reload if already visited
     return !localStorage.getItem("worldxi_visited");
   });
 
