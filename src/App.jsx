@@ -286,24 +286,95 @@ function SetUsernameScreen({ wallet, onDone }) {
 
 function HomeScreen({ username }) {
   return (
-    <div style={{ padding: "16px", background: "var(--bg)", minHeight: "100vh" }}>
-      <Logo size={48} />
-      <div style={{ marginTop: 16, textAlign: "center", fontSize: 12, color: "var(--grey)" }}>
-        Welcome, <span style={{ color: "var(--accent)", fontWeight: 700 }}>{username}</span>
-      </div>
-      <div style={{ marginTop: "32px", fontSize: "12px", color: "var(--grey)", lineHeight: 1.8 }}>
-        <div style={{ marginBottom: "20px" }}>
-          <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--accent)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: 1 }}>
-            Leaderboard
+    <div style={{ minHeight: "100vh", background: "var(--bg)", position: "relative", overflow: "hidden" }}>
+      {/* Blurred pitch background */}
+      <div style={{
+        position: "absolute", inset: 0, zIndex: 0,
+        background: `
+          radial-gradient(ellipse at 50% 30%, rgba(0,100,40,0.35) 0%, transparent 70%),
+          repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 40px,
+            rgba(0,150,60,0.06) 40px,
+            rgba(0,150,60,0.06) 41px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 40px,
+            rgba(0,150,60,0.06) 40px,
+            rgba(0,150,60,0.06) 41px
+          )
+        `,
+        filter: "blur(0.5px)",
+      }} />
+      {/* Center circle */}
+      <div style={{
+        position: "absolute", top: "18%", left: "50%", transform: "translateX(-50%)",
+        width: 180, height: 180, borderRadius: "50%",
+        border: "1px solid rgba(0,200,80,0.12)", zIndex: 0,
+      }} />
+      {/* Center line */}
+      <div style={{
+        position: "absolute", top: "27%", left: "10%", right: "10%",
+        height: 1, background: "rgba(0,200,80,0.1)", zIndex: 0,
+      }} />
+
+      <div style={{ position: "relative", zIndex: 1, padding: 20 }}>
+        {/* Welcome card */}
+        <div style={{
+          marginBottom: 24, padding: "20px 16px", borderRadius: 12,
+          background: "rgba(8,14,26,0.7)", backdropFilter: "blur(12px)",
+          border: "1px solid rgba(0,232,122,0.15)", textAlign: "center",
+        }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>🏆</div>
+          <div style={{ fontSize: 11, color: "var(--grey)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 4 }}>
+            Manager
           </div>
-          <div>Coming soon...</div>
-        </div>
-        <div style={{ marginBottom: "20px" }}>
-          <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--accent)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: 1 }}>
-            Your Points
+          <div style={{ fontSize: 22, fontWeight: 800, color: "var(--accent)" }}>{username}</div>
+          <div style={{ fontSize: 10, color: "var(--grey)", marginTop: 6, letterSpacing: 1 }}>
+            WORLD CUP 2026 • X LAYER
           </div>
-          <div>0 pts</div>
         </div>
+
+        {/* Stats row */}
+        <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+          {[
+            { label: "Points", value: "0", icon: "⭐" },
+            { label: "Rank", value: "—", icon: "📊" },
+            { label: "Squad", value: "0/15", icon: "👥" },
+          ].map(stat => (
+            <div key={stat.label} style={{
+              flex: 1, padding: "14px 8px", borderRadius: 10, textAlign: "center",
+              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+            }}>
+              <div style={{ fontSize: 18, marginBottom: 4 }}>{stat.icon}</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: "var(--text)", marginBottom: 2 }}>{stat.value}</div>
+              <div style={{ fontSize: 9, color: "var(--grey)", textTransform: "uppercase", letterSpacing: 1 }}>{stat.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Info cards */}
+        {[
+          { title: "Matchday 1", body: "World Cup 2026 kicks off June 11. Build your 15-man squad before the deadline.", icon: "📅" },
+          { title: "How to Score", body: "Goals, assists, clean sheets. Captain earns 2× points. Country bonus: +10% for 3+ players from same nation.", icon: "📋" },
+        ].map(card => (
+          <div key={card.title} style={{
+            marginBottom: 12, padding: "14px 16px", borderRadius: 10,
+            background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+            display: "flex", gap: 12, alignItems: "flex-start",
+          }}>
+            <div style={{ fontSize: 20, flexShrink: 0 }}>{card.icon}</div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                {card.title}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--grey)", lineHeight: 1.6 }}>{card.body}</div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -422,27 +493,105 @@ function WorldXIAppInner() {
     case "transfers":
       tabContent = <TransfersScreen />;
       break;
-    case "leaderboard":
-      tabContent = <LeaderboardScreen />;
+function WorldXIAppInner() {
+  const [wallet, setWallet] = useState(() => localStorage.getItem("worldxi_wallet") || null);
+  const [username, setUsername] = useState(() => localStorage.getItem("worldxi_username") || null);
+  const [activeTab, setActiveTab] = useState("home");
+  const [musicPlaying, setMusicPlaying] = useState(false);
+  const [squad, setSquad] = useState({
+    selectedPlayerIds: [],
+    captain: null,
+    viceCaptain: null,
+  });
+
+  const audioRef = useRef(null);
+  const musicStarted = useRef(false);
+
+  // Start music once on first render, respecting browser autoplay policy
+  useEffect(() => {
+    if (!musicStarted.current && audioRef.current) {
+      musicStarted.current = true;
+      audioRef.current.play().then(() => {
+        setMusicPlaying(true);
+      }).catch(() => {
+        // Browser blocked autoplay — user needs to interact first
+        const unlock = () => {
+          if (!musicStarted.current) return;
+          audioRef.current?.play().then(() => setMusicPlaying(true)).catch(() => {});
+          window.removeEventListener("click", unlock);
+        };
+        window.addEventListener("click", unlock, { once: true });
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+    if (musicPlaying) {
+      audioRef.current.play().catch(() => {});
+    } else {
+      audioRef.current.pause();
+    }
+  }, [musicPlaying]);
+
+  useEffect(() => {
+    const savedWallet = localStorage.getItem("worldxi_wallet");
+    const savedUsername = localStorage.getItem("worldxi_username");
+    if (savedWallet && !savedUsername) {
+      getExistingUsername(savedWallet).then(name => {
+        if (name) {
+          setUsername(name);
+          localStorage.setItem("worldxi_username", name);
+        }
+      }).catch(() => {});
+    }
+  }, []);
+
+  const handleConnect = async (address) => {
+    setWallet(address);
+    localStorage.setItem("worldxi_wallet", address);
+    const localUsername = localStorage.getItem("worldxi_username");
+    if (localUsername) { setUsername(localUsername); return; }
+    try {
+      const existingUsername = await getExistingUsername(address);
+      if (existingUsername) {
+        setUsername(existingUsername);
+        localStorage.setItem("worldxi_username", existingUsername);
+      }
+    } catch (_) {}
+  };
+
+  const handleUsernameSet = (name) => setUsername(name);
+
+  if (!wallet) return <ConnectScreen onConnect={handleConnect} />;
+  if (!username) return <SetUsernameScreen wallet={wallet} onDone={handleUsernameSet} />;
+
+  let tabContent;
+  switch (activeTab) {
+    case "home": tabContent = <HomeScreen username={username} />; break;
+    case "squad":
+      tabContent = (
+        <Suspense fallback={<div style={{ padding: "20px", color: "var(--grey)", textAlign: "center" }}>Loading...</div>}>
+          <SquadBuilder squad={squad} setSquad={setSquad} />
+        </Suspense>
+      );
       break;
-    default:
-      tabContent = <HomeScreen username={username} />;
+    case "transfers": tabContent = <TransfersScreen />; break;
+    case "leaderboard": tabContent = <LeaderboardScreen />; break;
+    default: tabContent = <HomeScreen username={username} />;
   }
 
   return (
-    <div
-      style={{ background: "var(--bg)", minHeight: "100vh", display: "flex", flexDirection: "column" }}
-      onClick={handleAppReady}
-    >
+    <div style={{ background: "var(--bg)", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <div style={{ flex: 1, overflowY: "auto", paddingBottom: "70px" }}>
         {tabContent}
       </div>
 
+      {/* Bottom nav */}
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0,
         height: "60px", background: "var(--bg)", borderTop: "1px solid var(--grey2)",
-        display: "flex", justifyContent: "space-around", alignItems: "center",
-        zIndex: 100,
+        display: "flex", justifyContent: "space-around", alignItems: "center", zIndex: 100,
       }}>
         {[
           { id: "home", label: "Home", icon: "🏠" },
@@ -450,26 +599,22 @@ function WorldXIAppInner() {
           { id: "transfers", label: "Transfers", icon: "🔄" },
           { id: "leaderboard", label: "Leaderboard", icon: "🏆" },
         ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              flex: 1, height: "100%", border: "none", background: "transparent",
-              display: "flex", flexDirection: "column", alignItems: "center",
-              justifyContent: "center", gap: "4px", cursor: "pointer",
-              color: activeTab === tab.id ? "var(--accent)" : "var(--grey2)",
-              fontSize: "11px", fontWeight: 600, textTransform: "uppercase",
-              letterSpacing: 0.5,
-            }}
-          >
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+            flex: 1, height: "100%", border: "none", background: "transparent",
+            display: "flex", flexDirection: "column", alignItems: "center",
+            justifyContent: "center", gap: "4px", cursor: "pointer",
+            color: activeTab === tab.id ? "var(--accent)" : "var(--grey2)",
+            fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5,
+          }}>
             <div style={{ fontSize: "16px" }}>{tab.icon}</div>
             <div>{tab.label}</div>
           </button>
         ))}
       </div>
 
+      {/* Music toggle */}
       <button
-        onClick={(e) => { e.stopPropagation(); setMusicPlaying(!musicPlaying); }}
+        onClick={() => setMusicPlaying(p => !p)}
         style={{
           position: "fixed", top: "12px", right: "12px", zIndex: 101,
           width: "40px", height: "40px", borderRadius: "50%",
@@ -477,20 +622,14 @@ function WorldXIAppInner() {
           color: "var(--accent)", fontSize: "16px", cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}
-        title="Toggle music"
       >
         {musicPlaying ? "🔊" : "🔇"}
       </button>
 
-      <audio
-        ref={audioRef}
-        src="/waka-waka.mp3"
-        loop
-        style={{ display: "none" }}
-      />
+      <audio ref={audioRef} src="/waka-waka.mp3" loop style={{ display: "none" }} />
     </div>
   );
-}
+      }
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(() => {
