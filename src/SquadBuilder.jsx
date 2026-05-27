@@ -32,13 +32,13 @@ const GLASS_GREEN = {
   borderRadius: 12,
 };
 
-export default function SquadBuilder({ squad, setSquad }) {
+export default function SquadBuilder({ squad, setSquad, onSquadLocked, squadLocked, txHash: savedTxHash }) {
   const [showPickerModal, setShowPickerModal] = useState(false);
   const [formation, setFormation] = useState(FORMATIONS[0]);
   const [locking, setLocking] = useState(false);
-  const [lockStatus, setLockStatus] = useState(null); // null | "success" | "error"
+  const [lockStatus, setLockStatus] = useState(squadLocked ? "success" : null);
   const [lockMsg, setLockMsg] = useState("");
-  const [txHash, setTxHash] = useState(null);
+  const [lockedTxHash, setLockedTxHash] = useState(savedTxHash || null);
 
   const budgetSpent = squad.selectedPlayerIds.reduce((sum, id) => {
     const p = findPlayerById(id);
@@ -81,6 +81,7 @@ export default function SquadBuilder({ squad, setSquad }) {
   }
 
   function handleRemovePlayer(playerId) {
+    if (squadLocked || lockStatus === "success") return;
     setSquad(prev => ({
       ...prev,
       selectedPlayerIds: prev.selectedPlayerIds.filter(id => id !== playerId),
@@ -90,6 +91,7 @@ export default function SquadBuilder({ squad, setSquad }) {
   }
 
   function handleSwapPlayers(id1, id2) {
+    if (squadLocked || lockStatus === "success") return;
     const ids = [...squad.selectedPlayerIds];
     const i1 = ids.indexOf(id1);
     const i2 = ids.indexOf(id2);
@@ -100,15 +102,23 @@ export default function SquadBuilder({ squad, setSquad }) {
   }
 
   async function handleLockSquad() {
-    if (locking || lockStatus === "success") return;
+    if (locking || squadLocked || lockStatus === "success") return;
     setLocking(true);
     setLockStatus(null);
     setLockMsg("");
     try {
       const result = await submitSquadOnchain(MATCHDAY, squad.selectedPlayerIds);
-      setTxHash(result.txHash);
+      const finalTxHash = result.txHash === "already-submitted"
+        ? (savedTxHash || "already-submitted")
+        : result.txHash;
+      setLockedTxHash(finalTxHash);
       setLockStatus("success");
-      setLockMsg("Squad locked onchain!");
+      setLockMsg(
+        result.txHash === "already-submitted"
+          ? "Squad already locked onchain!"
+          : "Squad locked onchain!"
+      );
+      if (onSquadLocked) onSquadLocked(finalTxHash);
     } catch (err) {
       setLockStatus("error");
       setLockMsg(err.message || "Transaction failed. Try again.");
@@ -119,15 +129,14 @@ export default function SquadBuilder({ squad, setSquad }) {
 
   const isSquadComplete = squad.selectedPlayerIds.length === 15;
   const canLockSquad = isSquadComplete && squad.captain && squad.viceCaptain;
+  const isLocked = squadLocked || lockStatus === "success";
 
   return (
     <div style={{
       padding: "16px",
       background: "var(--bg)",
       minHeight: "100vh",
-      backgroundImage: `
-        radial-gradient(ellipse at 50% 0%, rgba(0,100,40,0.2) 0%, transparent 60%)
-      `,
+      backgroundImage: `radial-gradient(ellipse at 50% 0%, rgba(0,100,40,0.2) 0%, transparent 60%)`,
     }}>
 
       {/* Header */}
@@ -140,6 +149,11 @@ export default function SquadBuilder({ squad, setSquad }) {
           <span style={{ color: "var(--grey2)" }}>/15</span>
           <span style={{ fontSize: 13, color: "var(--grey)", fontWeight: 400, marginLeft: 8 }}>players</span>
         </div>
+        {isLocked && (
+          <div style={{ fontSize: 11, color: "var(--accent)", marginTop: 4, fontWeight: 700 }}>
+            🔒 Squad locked onchain
+          </div>
+        )}
       </div>
 
       {/* Formation Selector */}
@@ -153,16 +167,17 @@ export default function SquadBuilder({ squad, setSquad }) {
             return (
               <button
                 key={f.name}
-                onClick={() => setFormation(f)}
+                onClick={() => !isLocked && setFormation(f)}
                 style={{
-                  padding: "7px 12px",
-                  borderRadius: 6,
+                  padding: "7px 12px", borderRadius: 6,
                   border: active ? "1px solid var(--accent)" : "1px solid rgba(255,255,255,0.08)",
                   background: active ? "rgba(0,232,122,0.12)" : "rgba(255,255,255,0.03)",
                   color: active ? "var(--accent)" : "var(--grey)",
                   fontSize: 11, fontWeight: 700,
-                  cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5,
+                  cursor: isLocked ? "default" : "pointer",
+                  textTransform: "uppercase", letterSpacing: 0.5,
                   transition: "all 0.15s",
+                  opacity: isLocked && !active ? 0.5 : 1,
                 }}
               >
                 {f.name}
@@ -182,13 +197,11 @@ export default function SquadBuilder({ squad, setSquad }) {
         </div>
         <div style={{ width: "100%", height: 5, background: "rgba(255,255,255,0.08)", borderRadius: 99, overflow: "hidden" }}>
           <div style={{
-            height: "100%",
-            width: `${budgetPct}%`,
+            height: "100%", width: `${budgetPct}%`,
             background: budgetRemaining < 10
               ? "linear-gradient(90deg, #FF4757, #ff6b6b)"
               : "linear-gradient(90deg, #00E87A, #00c96a)",
-            borderRadius: 99,
-            transition: "width 0.3s ease",
+            borderRadius: 99, transition: "width 0.3s ease",
           }} />
         </div>
         <div style={{ marginTop: 6, fontSize: 10, color: "var(--grey)", textAlign: "right" }}>
@@ -209,23 +222,15 @@ export default function SquadBuilder({ squad, setSquad }) {
         />
       </div>
 
-      {/* Add Players Button */}
-      {!isSquadComplete && (
+      {/* Add Players Button — hidden when locked */}
+      {!isSquadComplete && !isLocked && (
         <button
           onClick={() => setShowPickerModal(true)}
           style={{
-            width: "100%",
-            marginBottom: 12,
-            padding: "14px",
-            borderRadius: 10,
+            width: "100%", marginBottom: 12, padding: "14px", borderRadius: 10,
             background: "linear-gradient(135deg, #00E87A, #00c96a)",
-            color: "#000",
-            border: "none",
-            fontSize: 13,
-            fontWeight: 800,
-            textTransform: "uppercase",
-            letterSpacing: 1.5,
-            cursor: "pointer",
+            color: "#000", border: "none", fontSize: 13, fontWeight: 800,
+            textTransform: "uppercase", letterSpacing: 1.5, cursor: "pointer",
             boxShadow: "0 4px 24px rgba(0,232,122,0.25)",
           }}
         >
@@ -233,8 +238,8 @@ export default function SquadBuilder({ squad, setSquad }) {
         </button>
       )}
 
-      {/* Captain Selector */}
-      {isSquadComplete && (
+      {/* Captain Selector — hidden when locked */}
+      {isSquadComplete && !isLocked && (
         <div style={{ ...GLASS, padding: "14px", marginBottom: 12 }}>
           <CaptainSelector
             squad={squad}
@@ -245,54 +250,68 @@ export default function SquadBuilder({ squad, setSquad }) {
         </div>
       )}
 
-      {/* Lock Squad */}
-      {canLockSquad && lockStatus !== "success" && (
+      {/* Captain display when locked */}
+      {isLocked && squad.captain && (
+        <div style={{ ...GLASS_GREEN, padding: "12px 16px", marginBottom: 12, display: "flex", gap: 16 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 10, color: "var(--grey)", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>Captain</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>
+              ⭐ {findPlayerById(squad.captain)?.name || squad.captain}
+            </div>
+          </div>
+          {squad.viceCaptain && (
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 10, color: "var(--grey)", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>Vice Captain</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>
+                {findPlayerById(squad.viceCaptain)?.name || squad.viceCaptain}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Lock Squad Button */}
+      {canLockSquad && !isLocked && (
         <button
           onClick={handleLockSquad}
           disabled={locking}
           style={{
-            width: "100%",
-            padding: "15px",
-            borderRadius: 10,
-            background: locking
-              ? "rgba(0,232,122,0.3)"
-              : "linear-gradient(135deg, #00E87A, #00c96a)",
-            color: "#000",
-            border: "none",
-            fontSize: 13,
-            fontWeight: 800,
-            textTransform: "uppercase",
-            letterSpacing: 1.5,
+            width: "100%", padding: "15px", borderRadius: 10,
+            background: locking ? "rgba(0,232,122,0.3)" : "linear-gradient(135deg, #00E87A, #00c96a)",
+            color: "#000", border: "none", fontSize: 13, fontWeight: 800,
+            textTransform: "uppercase", letterSpacing: 1.5,
             cursor: locking ? "not-allowed" : "pointer",
             boxShadow: locking ? "none" : "0 4px 32px rgba(0,232,122,0.35)",
-            transition: "all 0.2s",
-            marginBottom: 8,
+            transition: "all 0.2s", marginBottom: 8,
           }}
         >
-          {locking ? "⏳ Submitting Onchain..." : "🔒 Lock Squad"}
+          {locking ? "⏳ Submitting to X Layer..." : "🔒 Lock Squad on X Layer"}
         </button>
       )}
 
       {/* Success state */}
-      {lockStatus === "success" && (
-        <div style={{
-          ...GLASS_GREEN,
-          padding: "16px",
-          textAlign: "center",
-          marginBottom: 8,
-        }}>
-          <div style={{ fontSize: 28, marginBottom: 8 }}>✅</div>
-          <div style={{ fontSize: 13, fontWeight: 800, color: "var(--accent)", marginBottom: 4 }}>
-            Squad Locked Onchain!
+      {isLocked && (
+        <div style={{ ...GLASS_GREEN, padding: "20px 16px", textAlign: "center", marginBottom: 8 }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: "var(--accent)", marginBottom: 4 }}>
+            Squad Locked on X Layer!
           </div>
-          {txHash && (
+          <div style={{ fontSize: 11, color: "var(--grey)", marginBottom: 12, lineHeight: 1.6 }}>
+            Your squad is permanently recorded onchain.<br />Good luck, manager.
+          </div>
+          {lockedTxHash && lockedTxHash !== "already-submitted" && (
             <a
-              href={`https://xlayer-testnet.blockscout.com/tx/${txHash}`}
+              href={`https://xlayer-testnet.blockscout.com/tx/${lockedTxHash}`}
               target="_blank"
               rel="noreferrer"
-              style={{ fontSize: 10, color: "var(--grey)", textDecoration: "underline", wordBreak: "break-all" }}
+              style={{
+                display: "inline-block", padding: "8px 16px", borderRadius: 8,
+                background: "rgba(0,232,122,0.1)", border: "1px solid rgba(0,232,122,0.2)",
+                fontSize: 10, color: "var(--accent)", textDecoration: "none",
+                wordBreak: "break-all",
+              }}
             >
-              View tx: {txHash.slice(0, 20)}...
+              🔗 View on Blockscout
             </a>
           )}
         </div>
@@ -301,9 +320,7 @@ export default function SquadBuilder({ squad, setSquad }) {
       {/* Error state */}
       {lockStatus === "error" && (
         <div style={{
-          ...GLASS,
-          padding: "12px 14px",
-          marginBottom: 8,
+          ...GLASS, padding: "12px 14px", marginBottom: 8,
           border: "1px solid rgba(255,71,87,0.3)",
           background: "rgba(255,71,87,0.06)",
         }}>
@@ -323,8 +340,8 @@ export default function SquadBuilder({ squad, setSquad }) {
         </div>
       )}
 
-      {/* Incomplete squad hint */}
-      {isSquadComplete && !squad.captain && (
+      {/* Hint */}
+      {isSquadComplete && !squad.captain && !isLocked && (
         <div style={{ textAlign: "center", fontSize: 11, color: "var(--grey)", marginTop: 4 }}>
           Set a captain and vice-captain to lock your squad
         </div>
