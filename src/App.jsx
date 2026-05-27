@@ -19,7 +19,6 @@ class ErrorBoundary extends Component {
   }
 }
 
-// Shared glass styles
 const glass = {
   background: "rgba(255,255,255,0.04)",
   backdropFilter: "blur(16px)",
@@ -39,7 +38,6 @@ const glassGreen = {
 function PitchBg() {
   return (
     <div style={{ position: "absolute", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}>
-      {/* Grass gradient */}
       <div style={{
         position: "absolute", inset: 0,
         background: `
@@ -47,7 +45,6 @@ function PitchBg() {
           radial-gradient(ellipse at 50% 90%, rgba(0,80,30,0.18) 0%, transparent 50%)
         `,
       }} />
-      {/* Pitch stripes */}
       <div style={{
         position: "absolute", inset: 0,
         backgroundImage: `repeating-linear-gradient(
@@ -56,33 +53,26 @@ function PitchBg() {
           rgba(0,180,70,0.04) 48px, rgba(0,180,70,0.04) 96px
         )`,
       }} />
-      {/* Center circle */}
       <div style={{
         position: "absolute", top: "22%", left: "50%", transform: "translateX(-50%)",
         width: 200, height: 200, borderRadius: "50%",
         border: "1px solid rgba(255,255,255,0.06)",
       }} />
-      {/* Center dot */}
       <div style={{
         position: "absolute", top: "calc(22% + 99px)", left: "50%", transform: "translate(-50%,-50%)",
-        width: 6, height: 6, borderRadius: "50%",
-        background: "rgba(255,255,255,0.1)",
+        width: 6, height: 6, borderRadius: "50%", background: "rgba(255,255,255,0.1)",
       }} />
-      {/* Halfway line */}
       <div style={{
         position: "absolute", top: "22%", left: "8%", right: "8%",
         height: 1, background: "rgba(255,255,255,0.05)",
       }} />
-      {/* Penalty boxes */}
       <div style={{
         position: "absolute", top: 0, left: "20%", right: "20%",
-        height: "12%", border: "1px solid rgba(255,255,255,0.05)",
-        borderTop: "none",
+        height: "12%", border: "1px solid rgba(255,255,255,0.05)", borderTop: "none",
       }} />
       <div style={{
         position: "absolute", bottom: 0, left: "20%", right: "20%",
-        height: "12%", border: "1px solid rgba(255,255,255,0.05)",
-        borderBottom: "none",
+        height: "12%", border: "1px solid rgba(255,255,255,0.05)", borderBottom: "none",
       }} />
     </div>
   );
@@ -181,19 +171,10 @@ function VideoSplash({ onDone }) {
             Tap to skip
           </div>
           <div style={{ width: 120, height: 2, background: "rgba(255,255,255,0.1)", borderRadius: 99, overflow: "hidden" }}>
-            <div style={{
-              height: "100%", background: "var(--accent)", borderRadius: 99,
-              animation: "splashProgress 42s linear forwards",
-            }} />
+            <div style={{ height: "100%", background: "var(--accent)", borderRadius: 99, animation: "splashProgress 42s linear forwards" }} />
           </div>
         </div>
       )}
-      <style>{`
-        @keyframes splashProgress { from{width:0%} to{width:100%} }
-        @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.1);opacity:0.75} }
-        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
-      `}</style>
     </div>
   );
 }
@@ -215,30 +196,24 @@ function ConnectScreen({ onConnect }) {
 
   return (
     <div style={{
-      position: "fixed", inset: 0, zIndex: 998,
-      background: "var(--bg)",
+      position: "fixed", inset: 0, zIndex: 998, background: "var(--bg)",
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
       padding: 32, overflow: "hidden",
     }}>
       <PitchBg />
-
-      {/* Glow orb */}
       <div style={{
         position: "absolute", top: "-10%", left: "50%", transform: "translateX(-50%)",
         width: 400, height: 400, borderRadius: "50%",
         background: "radial-gradient(circle, rgba(0,232,122,0.12) 0%, transparent 70%)",
         pointerEvents: "none",
       }} />
-
       <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 340, animation: "fadeUp 0.6s ease" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
           <Logo size={72} sub={true} />
         </div>
-
         <div style={{
-          ...glassGreen,
-          padding: 28,
+          ...glassGreen, padding: 28,
           boxShadow: "0 8px 48px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
         }}>
           <div style={{ textAlign: "center", marginBottom: 24 }}>
@@ -250,15 +225,12 @@ function ConnectScreen({ onConnect }) {
               Build your fantasy XI.<br />Compete onchain. Win glory.
             </div>
           </div>
-
           <button
             onClick={handleConnect}
             disabled={loading}
             style={{
               width: "100%", padding: "14px 20px", borderRadius: 10,
-              background: loading
-                ? "rgba(0,232,122,0.3)"
-                : "linear-gradient(135deg, #00E87A, #00c96a)",
+              background: loading ? "rgba(0,232,122,0.3)" : "linear-gradient(135deg, #00E87A, #00c96a)",
               color: "#000", border: "none", fontSize: 13, fontWeight: 800,
               textTransform: "uppercase", letterSpacing: 1.5,
               cursor: loading ? "not-allowed" : "pointer",
@@ -268,7 +240,6 @@ function ConnectScreen({ onConnect }) {
           >
             {loading ? "Connecting..." : "⚡ Connect OKX Wallet"}
           </button>
-
           {error && (
             <div style={{
               marginTop: 12, padding: "10px 14px", borderRadius: 8,
@@ -278,12 +249,10 @@ function ConnectScreen({ onConnect }) {
               {error}
             </div>
           )}
-
           <div style={{ marginTop: 16, textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.25)", lineHeight: 1.8 }}>
             Your wallet is your identity<br />No email • No password • No data
           </div>
         </div>
-
         <div style={{ marginTop: 20, textAlign: "center", fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: "rgba(255,255,255,0.2)" }}>
           Powered by <span style={{ color: "var(--accent)" }}>X Layer</span> • OKX Chain
         </div>
@@ -303,8 +272,8 @@ function SetUsernameScreen({ wallet, onDone }) {
     if (!isValid) return;
     setSaving(true); setError("");
     try {
-      localStorage.setItem("worldxi_username", username);
-      localStorage.setItem("worldxi_wallet", wallet);
+      localStorage.setItem(`worldxi_username_${wallet}`, username);
+      localStorage.setItem("worldxi_last_wallet", wallet);
       onDone(username);
     } catch (err) {
       setError(err.message || "Failed. Try again.");
@@ -314,41 +283,27 @@ function SetUsernameScreen({ wallet, onDone }) {
 
   return (
     <div style={{
-      position: "fixed", inset: 0, zIndex: 998,
-      background: "var(--bg)",
+      position: "fixed", inset: 0, zIndex: 998, background: "var(--bg)",
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
       padding: 32, overflow: "hidden",
     }}>
       <PitchBg />
       <div style={{ position: "absolute", top: "-5%", left: "50%", transform: "translateX(-50%)", width: 350, height: 350, borderRadius: "50%", background: "radial-gradient(circle, rgba(0,232,122,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
-
       <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 340, animation: "fadeUp 0.5s ease" }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <Logo size={52} />
         </div>
-
-        <div style={{
-          ...glass,
-          padding: 24,
-          boxShadow: "0 8px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)",
-        }}>
+        <div style={{ ...glass, padding: 24, boxShadow: "0 8px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)" }}>
           <div style={{ fontSize: 13, fontWeight: 800, color: "var(--text)", marginBottom: 4 }}>
             Choose Your Manager Name
           </div>
           <div style={{ fontSize: 11, color: "var(--grey)", marginBottom: 20, lineHeight: 1.6 }}>
             This is how you'll appear on the leaderboard
           </div>
-
-          {/* Wallet badge */}
-          <div style={{
-            ...glassGreen, padding: "8px 12px", marginBottom: 16,
-            fontSize: 10, fontFamily: "monospace", color: "var(--accent)",
-            wordBreak: "break-all", borderRadius: 8,
-          }}>
+          <div style={{ ...glassGreen, padding: "8px 12px", marginBottom: 16, fontSize: 10, fontFamily: "monospace", color: "var(--accent)", wordBreak: "break-all", borderRadius: 8 }}>
             {wallet}
           </div>
-
           <input
             type="text"
             placeholder="e.g. TacticalGenius_99"
@@ -362,33 +317,23 @@ function SetUsernameScreen({ wallet, onDone }) {
                 : "1px solid rgba(255,255,255,0.1)",
               background: "rgba(255,255,255,0.04)",
               color: "var(--text)", fontSize: 13, marginBottom: 8,
-              boxSizing: "border-box", outline: "none",
-              transition: "border 0.2s",
+              boxSizing: "border-box", outline: "none", transition: "border 0.2s",
             }}
           />
-
           <div style={{ fontSize: 10, color: "var(--grey)", marginBottom: 16 }}>
             3–20 characters • Letters, numbers, underscores only
           </div>
-
           {error && (
-            <div style={{
-              marginBottom: 12, padding: "8px 12px", borderRadius: 8,
-              background: "rgba(255,71,87,0.08)", border: "1px solid rgba(255,71,87,0.2)",
-              fontSize: 11, color: "var(--red)",
-            }}>
+            <div style={{ marginBottom: 12, padding: "8px 12px", borderRadius: 8, background: "rgba(255,71,87,0.08)", border: "1px solid rgba(255,71,87,0.2)", fontSize: 11, color: "var(--red)" }}>
               {error}
             </div>
           )}
-
           <button
             onClick={handleSave}
             disabled={!isValid || saving}
             style={{
               width: "100%", padding: "13px", borderRadius: 10,
-              background: isValid
-                ? "linear-gradient(135deg, #00E87A, #00c96a)"
-                : "rgba(255,255,255,0.06)",
+              background: isValid ? "linear-gradient(135deg, #00E87A, #00c96a)" : "rgba(255,255,255,0.06)",
               color: isValid ? "#000" : "var(--grey2)",
               border: "none", fontSize: 13, fontWeight: 800,
               cursor: isValid ? "pointer" : "not-allowed",
@@ -406,38 +351,31 @@ function SetUsernameScreen({ wallet, onDone }) {
   );
 }
 
-function HomeScreen({ username, squadCount }) {
+function HomeScreen({ username, squadCount, squadLocked, txHash }) {
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", position: "relative", overflow: "hidden" }}>
       <PitchBg />
-
       <div style={{ position: "relative", zIndex: 1, padding: "20px 16px" }}>
-        {/* Manager card */}
         <div style={{
-          ...glassGreen,
-          padding: "22px 20px",
-          marginBottom: 16,
-          textAlign: "center",
+          ...glassGreen, padding: "22px 20px", marginBottom: 16, textAlign: "center",
           boxShadow: "0 4px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
           animation: "fadeUp 0.4s ease",
         }}>
           <div style={{ fontSize: 36, marginBottom: 10 }}>🏆</div>
-          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 6 }}>
-            Manager
-          </div>
-          <div style={{
-            fontSize: 24, fontWeight: 900, color: "var(--accent)",
-            marginBottom: 4,
-            textShadow: "0 0 20px rgba(0,232,122,0.4)",
-          }}>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 6 }}>Manager</div>
+          <div style={{ fontSize: 24, fontWeight: 900, color: "var(--accent)", marginBottom: 4, textShadow: "0 0 20px rgba(0,232,122,0.4)" }}>
             {username}
           </div>
           <div style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", letterSpacing: 2, textTransform: "uppercase" }}>
             World Cup 2026 • X Layer
           </div>
+          {squadLocked && (
+            <div style={{ marginTop: 10, display: "inline-block", padding: "4px 12px", borderRadius: 20, background: "rgba(0,232,122,0.12)", border: "1px solid rgba(0,232,122,0.3)", fontSize: 10, color: "var(--accent)", fontWeight: 700 }}>
+              🔒 Squad Locked Onchain
+            </div>
+          )}
         </div>
 
-        {/* Stats row */}
         <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
           {[
             { label: "Points", value: "0", icon: "⭐", color: "#FFD700" },
@@ -446,8 +384,7 @@ function HomeScreen({ username, squadCount }) {
           ].map(stat => (
             <div key={stat.label} style={{
               flex: 1, padding: "14px 8px", borderRadius: 12, textAlign: "center",
-              ...glass,
-              boxShadow: "0 2px 16px rgba(0,0,0,0.2)",
+              ...glass, boxShadow: "0 2px 16px rgba(0,0,0,0.2)",
             }}>
               <div style={{ fontSize: 20, marginBottom: 6 }}>{stat.icon}</div>
               <div style={{ fontSize: 17, fontWeight: 900, color: stat.color, marginBottom: 3 }}>{stat.value}</div>
@@ -456,54 +393,44 @@ function HomeScreen({ username, squadCount }) {
           ))}
         </div>
 
-        {/* Deadline banner */}
-        <div style={{
-          ...glass,
-          padding: "12px 16px",
-          marginBottom: 12,
-          display: "flex", alignItems: "center", gap: 12,
-          borderColor: "rgba(255,193,7,0.2)",
-          background: "rgba(255,193,7,0.04)",
-        }}>
+        {squadLocked && txHash && txHash !== "already-submitted" && (
+          <div style={{ ...glassGreen, padding: "12px 16px", marginBottom: 12, display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ fontSize: 20 }}>🔗</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)", marginBottom: 2 }}>Squad TX on X Layer</div>
+              <a
+                href={`https://xlayer-testnet.blockscout.com/tx/${txHash}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{ fontSize: 10, color: "var(--grey)", textDecoration: "underline", wordBreak: "break-all" }}
+              >
+                {txHash.slice(0, 24)}...
+              </a>
+            </div>
+          </div>
+        )}
+
+        <div style={{ ...glass, padding: "12px 16px", marginBottom: 12, display: "flex", alignItems: "center", gap: 12, borderColor: "rgba(255,193,7,0.2)", background: "rgba(255,193,7,0.04)" }}>
           <div style={{ fontSize: 22 }}>⏰</div>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#FFC107", marginBottom: 2 }}>Deadline: June 11, 2026</div>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", lineHeight: 1.5 }}>
-              Lock your squad before World Cup kickoff
-            </div>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", lineHeight: 1.5 }}>Lock your squad before World Cup kickoff</div>
           </div>
         </div>
 
-        {/* Info cards */}
         {[
-          {
-            icon: "⚽", title: "How to Play",
-            body: "Pick 15 players within 100 OKB budget. Max 3 from any nation. Set captain (2× points) and vice-captain.",
-            color: "rgba(0,232,122,0.15)",
-          },
-          {
-            icon: "🏅", title: "Scoring",
-            body: "Goals, assists, clean sheets all earn points. Country bonus: +10% if 3+ players from same nation in your XI.",
-            color: "rgba(255,193,7,0.1)",
-          },
-          {
-            icon: "🔗", title: "Onchain",
-            body: "Your squad is submitted to X Layer. Transparent, verifiable, unstoppable.",
-            color: "rgba(100,100,255,0.08)",
-          },
+          { icon: "⚽", title: "How to Play", body: "Pick 15 players within 100 OKB budget. Max 3 from any nation. Set captain (2× points) and vice-captain.", color: "rgba(0,232,122,0.06)" },
+          { icon: "🏅", title: "Scoring", body: "Goals, assists, clean sheets all earn points. Country bonus: +10% if 3+ players from same nation in your XI.", color: "rgba(255,193,7,0.05)" },
+          { icon: "🔗", title: "Powered by X Layer", body: "Your squad is submitted onchain to X Layer — transparent, verifiable, and permanent.", color: "rgba(100,100,255,0.05)" },
         ].map(card => (
           <div key={card.title} style={{
             marginBottom: 10, padding: "14px 16px", borderRadius: 12,
-            background: card.color,
-            border: "1px solid rgba(255,255,255,0.06)",
-            display: "flex", gap: 14, alignItems: "flex-start",
-            backdropFilter: "blur(8px)",
+            background: card.color, border: "1px solid rgba(255,255,255,0.06)",
+            display: "flex", gap: 14, alignItems: "flex-start", backdropFilter: "blur(8px)",
           }}>
             <div style={{ fontSize: 22, flexShrink: 0 }}>{card.icon}</div>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 800, color: "var(--text)", marginBottom: 4, letterSpacing: 0.3 }}>
-                {card.title}
-              </div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "var(--text)", marginBottom: 4, letterSpacing: 0.3 }}>{card.title}</div>
               <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", lineHeight: 1.7 }}>{card.body}</div>
             </div>
           </div>
@@ -518,16 +445,12 @@ function TransfersScreen() {
     <div style={{ padding: "20px 16px", background: "var(--bg)", minHeight: "100vh", position: "relative", overflow: "hidden" }}>
       <PitchBg />
       <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ fontSize: 11, color: "var(--grey)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 4 }}>
-          WorldXI
-        </div>
+        <div style={{ fontSize: 11, color: "var(--grey)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 4 }}>WorldXI</div>
         <div style={{ fontSize: 20, fontWeight: 800, color: "var(--text)", marginBottom: 24 }}>Transfers</div>
         <div style={{ ...glass, padding: "32px 20px", textAlign: "center" }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🔄</div>
           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>Coming Soon</div>
-          <div style={{ fontSize: 11, color: "var(--grey)", lineHeight: 1.7 }}>
-            Swap players between matchdays.<br />Strategy starts here.
-          </div>
+          <div style={{ fontSize: 11, color: "var(--grey)", lineHeight: 1.7 }}>Swap players between matchdays.<br />Strategy starts here.</div>
         </div>
       </div>
     </div>
@@ -539,16 +462,12 @@ function LeaderboardScreen() {
     <div style={{ padding: "20px 16px", background: "var(--bg)", minHeight: "100vh", position: "relative", overflow: "hidden" }}>
       <PitchBg />
       <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ fontSize: 11, color: "var(--grey)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 4 }}>
-          WorldXI
-        </div>
+        <div style={{ fontSize: 11, color: "var(--grey)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 4 }}>WorldXI</div>
         <div style={{ fontSize: 20, fontWeight: 800, color: "var(--text)", marginBottom: 24 }}>Leaderboard</div>
         <div style={{ ...glass, padding: "32px 20px", textAlign: "center" }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🏆</div>
           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>Coming Soon</div>
-          <div style={{ fontSize: 11, color: "var(--grey)", lineHeight: 1.7 }}>
-            Global rankings go live<br />when World Cup kicks off.
-          </div>
+          <div style={{ fontSize: 11, color: "var(--grey)", lineHeight: 1.7 }}>Global rankings go live<br />when World Cup kicks off.</div>
         </div>
       </div>
     </div>
@@ -556,26 +475,52 @@ function LeaderboardScreen() {
 }
 
 function WorldXIAppInner() {
-  const [wallet, setWallet] = useState(() => localStorage.getItem("worldxi_wallet") || null);
-  const [username, setUsername] = useState(() => localStorage.getItem("worldxi_username") || null);
-  const [activeTab, setActiveTab] = useState("home");
+  const lastWallet = localStorage.getItem("worldxi_last_wallet");
+
+  function loadForWallet(addr) {
+    return {
+      username: localStorage.getItem(`worldxi_username_${addr}`) || null,
+      squad: (() => {
+        try {
+          const s = localStorage.getItem(`worldxi_squad_${addr}`);
+          return s ? JSON.parse(s) : { selectedPlayerIds: [], captain: null, viceCaptain: null };
+        } catch (_) { return { selectedPlayerIds: [], captain: null, viceCaptain: null }; }
+      })(),
+      tab: localStorage.getItem(`worldxi_tab_${addr}`) || "home",
+      squadLocked: localStorage.getItem(`worldxi_locked_${addr}`) === "true",
+      txHash: localStorage.getItem(`worldxi_txhash_${addr}`) || null,
+    };
+  }
+
+  const [wallet, setWallet] = useState(() => lastWallet || null);
+  const [username, setUsername] = useState(() => lastWallet ? loadForWallet(lastWallet).username : null);
+  const [activeTab, setActiveTab] = useState(() => lastWallet ? loadForWallet(lastWallet).tab : "home");
   const [musicPlaying, setMusicPlaying] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
-  const [squad, setSquad] = useState({
-    selectedPlayerIds: [],
-    captain: null,
-    viceCaptain: null,
-  });
+  const [squadLocked, setSquadLocked] = useState(() => lastWallet ? loadForWallet(lastWallet).squadLocked : false);
+  const [lockedTxHash, setLockedTxHash] = useState(() => lastWallet ? loadForWallet(lastWallet).txHash : null);
+  const [squad, setSquad] = useState(() => lastWallet ? loadForWallet(lastWallet).squad : { selectedPlayerIds: [], captain: null, viceCaptain: null });
 
   const audioRef = useRef(null);
   const musicStarted = useRef(false);
 
+  // Auto-save squad on every change
+  useEffect(() => {
+    if (!wallet) return;
+    localStorage.setItem(`worldxi_squad_${wallet}`, JSON.stringify(squad));
+  }, [squad, wallet]);
+
+  // Auto-save active tab
+  useEffect(() => {
+    if (!wallet) return;
+    localStorage.setItem(`worldxi_tab_${wallet}`, activeTab);
+  }, [activeTab, wallet]);
+
+  // Music
   useEffect(() => {
     if (!musicStarted.current && audioRef.current) {
       musicStarted.current = true;
-      audioRef.current.play().then(() => {
-        setMusicPlaying(true);
-      }).catch(() => {
+      audioRef.current.play().then(() => setMusicPlaying(true)).catch(() => {
         const unlock = () => {
           audioRef.current?.play().then(() => setMusicPlaying(true)).catch(() => {});
           window.removeEventListener("click", unlock);
@@ -587,50 +532,59 @@ function WorldXIAppInner() {
 
   useEffect(() => {
     if (!audioRef.current) return;
-    if (musicPlaying) {
-      audioRef.current.play().catch(() => {});
-    } else {
-      audioRef.current.pause();
-    }
+    if (musicPlaying) { audioRef.current.play().catch(() => {}); }
+    else { audioRef.current.pause(); }
   }, [musicPlaying]);
 
-  useEffect(() => {
-    const savedWallet = localStorage.getItem("worldxi_wallet");
-    const savedUsername = localStorage.getItem("worldxi_username");
-    if (savedWallet && !savedUsername) {
-      getExistingUsername(savedWallet).then(name => {
-        if (name) {
-          setUsername(name);
-          localStorage.setItem("worldxi_username", name);
-        }
-      }).catch(() => {});
-    }
-  }, []);
-
   const handleConnect = async (address) => {
+    const data = loadForWallet(address);
     setWallet(address);
-    localStorage.setItem("worldxi_wallet", address);
-    const localUsername = localStorage.getItem("worldxi_username");
-    if (localUsername) { setUsername(localUsername); return; }
-    try {
-      const existingUsername = await getExistingUsername(address);
-      if (existingUsername) {
-        setUsername(existingUsername);
-        localStorage.setItem("worldxi_username", existingUsername);
-      }
-    } catch (_) {}
+    setUsername(data.username);
+    setSquad(data.squad);
+    setActiveTab(data.tab);
+    setSquadLocked(data.squadLocked);
+    setLockedTxHash(data.txHash);
+    localStorage.setItem("worldxi_last_wallet", address);
+
+    if (!data.username) {
+      try {
+        const onchainName = await getExistingUsername(address);
+        if (onchainName) {
+          setUsername(onchainName);
+          localStorage.setItem(`worldxi_username_${address}`, onchainName);
+        }
+      } catch (_) {}
+    }
   };
 
+  const handleUsernameSet = (name) => {
+    setUsername(name);
+    if (wallet) {
+      localStorage.setItem(`worldxi_username_${wallet}`, name);
+      localStorage.setItem("worldxi_last_wallet", wallet);
+    }
+  };
+
+  const handleSquadLocked = (txHash) => {
+    setSquadLocked(true);
+    setLockedTxHash(txHash);
+    if (wallet) {
+      localStorage.setItem(`worldxi_locked_${wallet}`, "true");
+      localStorage.setItem(`worldxi_txhash_${wallet}`, txHash);
+    }
+  };
+
+  // Logout — session only, all data stays
   const handleLogout = () => {
-    localStorage.removeItem("worldxi_wallet");
-    localStorage.removeItem("worldxi_username");
-    localStorage.removeItem("worldxi_visited");
+    if (wallet) {
+      localStorage.setItem(`worldxi_squad_${wallet}`, JSON.stringify(squad));
+      localStorage.setItem(`worldxi_tab_${wallet}`, activeTab);
+    }
     setWallet(null);
     setUsername(null);
     setShowLogout(false);
+    // Keep worldxi_last_wallet so reconnecting restores instantly
   };
-
-  const handleUsernameSet = (name) => setUsername(name);
 
   if (!wallet) return <ConnectScreen onConnect={handleConnect} />;
   if (!username) return <SetUsernameScreen wallet={wallet} onDone={handleUsernameSet} />;
@@ -638,16 +592,18 @@ function WorldXIAppInner() {
   let tabContent;
   switch (activeTab) {
     case "home":
-      tabContent = <HomeScreen username={username} squadCount={squad.selectedPlayerIds.length} />;
+      tabContent = <HomeScreen username={username} squadCount={squad.selectedPlayerIds.length} squadLocked={squadLocked} txHash={lockedTxHash} />;
       break;
     case "squad":
       tabContent = (
-        <Suspense fallback={
-          <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--grey)", fontSize: 12 }}>
-            Loading squad builder...
-          </div>
-        }>
-          <SquadBuilder squad={squad} setSquad={setSquad} />
+        <Suspense fallback={<div style={{ padding: "40px 20px", textAlign: "center", color: "var(--grey)", fontSize: 12 }}>Loading squad builder...</div>}>
+          <SquadBuilder
+            squad={squad}
+            setSquad={setSquad}
+            onSquadLocked={handleSquadLocked}
+            squadLocked={squadLocked}
+            txHash={lockedTxHash}
+          />
         </Suspense>
       );
       break;
@@ -667,16 +623,11 @@ function WorldXIAppInner() {
         {tabContent}
       </div>
 
-      {/* Bottom nav — glassmorphism */}
       <div style={{
-        position: "fixed", bottom: 0, left: 0, right: 0,
-        height: "62px",
-        background: "rgba(8,14,26,0.85)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
+        position: "fixed", bottom: 0, left: 0, right: 0, height: "62px",
+        background: "rgba(8,14,26,0.85)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
         borderTop: "1px solid rgba(255,255,255,0.06)",
-        display: "flex", justifyContent: "space-around", alignItems: "center",
-        zIndex: 100,
+        display: "flex", justifyContent: "space-around", alignItems: "center", zIndex: 100,
       }}>
         {[
           { id: "home", label: "Home", icon: "🏠" },
@@ -693,15 +644,9 @@ function WorldXIAppInner() {
               color: active ? "var(--accent)" : "rgba(255,255,255,0.3)",
               fontSize: "10px", fontWeight: active ? 700 : 500,
               textTransform: "uppercase", letterSpacing: 0.5,
-              transition: "color 0.15s",
-              position: "relative",
+              transition: "color 0.15s", position: "relative",
             }}>
-              {active && (
-                <div style={{
-                  position: "absolute", top: 0, left: "25%", right: "25%",
-                  height: 2, background: "var(--accent)", borderRadius: "0 0 2px 2px",
-                }} />
-              )}
+              {active && <div style={{ position: "absolute", top: 0, left: "25%", right: "25%", height: 2, background: "var(--accent)", borderRadius: "0 0 2px 2px" }} />}
               <div style={{ fontSize: "18px" }}>{tab.icon}</div>
               <div>{tab.label}</div>
             </button>
@@ -709,40 +654,30 @@ function WorldXIAppInner() {
         })}
       </div>
 
-      {/* Top-right controls */}
-      <div style={{
-        position: "fixed", top: 12, right: 12, zIndex: 101,
-        display: "flex", gap: 8, alignItems: "center",
-      }}>
-        {/* Music toggle */}
+      <div style={{ position: "fixed", top: 12, right: 12, zIndex: 101, display: "flex", gap: 8, alignItems: "center" }}>
         <button
           onClick={() => setMusicPlaying(p => !p)}
           style={{
             width: 38, height: 38, borderRadius: 10,
-            background: "rgba(8,14,26,0.7)",
-            backdropFilter: "blur(12px)",
+            background: "rgba(8,14,26,0.7)", backdropFilter: "blur(12px)",
             border: "1px solid rgba(255,255,255,0.08)",
             color: musicPlaying ? "var(--accent)" : "rgba(255,255,255,0.3)",
             fontSize: 15, cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center",
-            transition: "all 0.15s",
           }}
         >
           {musicPlaying ? "🔊" : "🔇"}
         </button>
 
-        {/* Profile / logout */}
         <div style={{ position: "relative" }}>
           <button
             onClick={() => setShowLogout(p => !p)}
             style={{
               height: 38, padding: "0 12px", borderRadius: 10,
-              background: "rgba(8,14,26,0.7)",
-              backdropFilter: "blur(12px)",
+              background: "rgba(8,14,26,0.7)", backdropFilter: "blur(12px)",
               border: "1px solid rgba(255,255,255,0.08)",
               color: "var(--text)", fontSize: 11, fontWeight: 700,
-              cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
-              maxWidth: 120, overflow: "hidden",
+              cursor: "pointer", display: "flex", alignItems: "center", gap: 6, maxWidth: 130,
             }}
           >
             <span style={{ fontSize: 14 }}>👤</span>
@@ -754,40 +689,35 @@ function WorldXIAppInner() {
           {showLogout && (
             <div style={{
               position: "absolute", top: 44, right: 0,
-              ...glass,
-              padding: 6, minWidth: 140,
-              boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+              ...glass, padding: 6, minWidth: 170,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.6)", zIndex: 200,
             }}>
-              <div style={{
-                padding: "6px 12px", fontSize: 10, color: "rgba(255,255,255,0.3)",
-                borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 4,
-              }}>
-                {wallet?.slice(0, 6)}...{wallet?.slice(-4)}
+              <div style={{ padding: "8px 12px", fontSize: 10, color: "rgba(255,255,255,0.3)", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 4, lineHeight: 1.6 }}>
+                <div style={{ color: "var(--accent)", fontWeight: 700, marginBottom: 2 }}>{username}</div>
+                <div>{wallet?.slice(0, 8)}...{wallet?.slice(-6)}</div>
+                {squadLocked && <div style={{ color: "var(--accent)", marginTop: 4 }}>✅ Squad locked</div>}
+                <div style={{ marginTop: 2 }}>Squad: {squad.selectedPlayerIds.length}/15</div>
               </div>
               <button
                 onClick={handleLogout}
                 style={{
-                  width: "100%", padding: "8px 12px", borderRadius: 8,
-                  background: "rgba(255,71,87,0.08)", border: "none",
+                  width: "100%", padding: "9px 12px", borderRadius: 8,
+                  background: "rgba(255,71,87,0.08)", border: "1px solid rgba(255,71,87,0.15)",
                   color: "var(--red)", fontSize: 12, fontWeight: 700,
-                  cursor: "pointer", textAlign: "left", display: "flex",
-                  alignItems: "center", gap: 8,
+                  cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 8,
                 }}
               >
-                🚪 Disconnect
+                🚪 Disconnect Wallet
               </button>
+              <div style={{ padding: "6px 12px", fontSize: 9, color: "rgba(255,255,255,0.15)", marginTop: 2 }}>
+                Your progress is saved locally
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Click outside to close logout menu */}
-      {showLogout && (
-        <div
-          onClick={() => setShowLogout(false)}
-          style={{ position: "fixed", inset: 0, zIndex: 100 }}
-        />
-      )}
+      {showLogout && <div onClick={() => setShowLogout(false)} style={{ position: "fixed", inset: 0, zIndex: 100 }} />}
 
       <audio ref={audioRef} src="/waka-waka.mp3" loop style={{ display: "none" }} />
     </div>
@@ -795,9 +725,7 @@ function WorldXIAppInner() {
 }
 
 export default function App() {
-  const [showSplash, setShowSplash] = useState(() => {
-    return !localStorage.getItem("worldxi_visited");
-  });
+  const [showSplash, setShowSplash] = useState(() => !localStorage.getItem("worldxi_visited"));
 
   const handleSplashDone = () => {
     localStorage.setItem("worldxi_visited", "1");
@@ -810,12 +738,8 @@ export default function App() {
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: "Inter", -apple-system, sans-serif; background: #080e1a; }
         :root {
-          --bg: #080e1a;
-          --text: #ffffff;
-          --grey: #8b92a9;
-          --grey2: #4a5568;
-          --accent: #00E87A;
-          --red: #FF4757;
+          --bg: #080e1a; --text: #ffffff; --grey: #8b92a9;
+          --grey2: #4a5568; --accent: #00E87A; --red: #FF4757;
         }
         input::placeholder { color: rgba(255,255,255,0.25); }
         select option { background: #080e1a; }
@@ -826,12 +750,7 @@ export default function App() {
         @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.08);opacity:0.8} }
         @keyframes splashProgress { from{width:0%} to{width:100%} }
       `}</style>
-
-      {showSplash ? (
-        <VideoSplash onDone={handleSplashDone} />
-      ) : (
-        <WorldXIAppInner />
-      )}
+      {showSplash ? <VideoSplash onDone={handleSplashDone} /> : <WorldXIAppInner />}
     </ErrorBoundary>
   );
 }
