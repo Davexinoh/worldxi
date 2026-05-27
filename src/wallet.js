@@ -21,7 +21,6 @@ export const isOKXWalletInstalled = () => {
   return !!(window.okxwallet?.ethereum || window.ethereum);
 };
 
-// Silent switch — never throws, OKX mobile safe
 const silentSwitchToXLayer = async () => {
   try {
     const provider = getInjectedProvider();
@@ -37,11 +36,8 @@ const silentSwitchToXLayer = async () => {
           method: "wallet_addEthereumChain",
           params: [XLAYER_TESTNET],
         });
-      } catch (_) {
-        // ignore — wallet will reject the tx if wrong chain
-      }
+      } catch (_) {}
     }
-    // all other errors swallowed — let the tx attempt speak for itself
   }
 };
 
@@ -59,7 +55,9 @@ export const connectWallet = async () => {
   }
 };
 
-export const getBrowserProvider = () => new ethers.BrowserProvider(getInjectedProvider());
+export const getBrowserProvider = () => {
+  return new ethers.BrowserProvider(getInjectedProvider(), "any");
+};
 
 export const getSigner = async () => {
   const provider = getBrowserProvider();
@@ -72,7 +70,6 @@ export const getReadContract = () => {
   return new ethers.Contract(CONTRACT_ADDRESS, ABI, getRpcProvider());
 };
 
-// NO chain check here — OKX mobile eth_chainId throws, breaks the flow
 export const getWriteContract = async () => {
   const signer = await getSigner();
   return new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
@@ -102,34 +99,87 @@ export const checkUsernameAvailable = async (username) => {
 
 export const registerManagerOnchain = async (username) => {
   try {
-    await silentSwitchToXLayer(); // best-effort before tx, never blocks
+    await silentSwitchToXLayer();
+    const signer = await getSigner();
+    const address = await signer.getAddress();
+    const readContract = getReadContract();
+    const existing = await readContract.getManager(address);
+
+    if (existing[3] === true) {
+      console.log("Already registered onchain as:", existing[0]);
+      return "already-registered";
+    }
+
     const contract = await getWriteContract();
     const tx = await contract.registerManager(username);
-    console.log("Register manager tx submitted:", tx.hash);
+    console.log("Register manager tx:", tx.hash);
     await tx.wait();
     return tx.hash;
   } catch (err) {
     console.error("Manager registration failed:", err);
     if (err.code === 4001) throw new Error("Transaction rejected by user");
+    if (
+      err?.reason === "AlreadyRegistered" ||
+      err?.message?.includes("AlreadyRegistered")
+    ) return "already-registered";
     throw new Error(
-      err?.reason || err?.shortMessage || err?.message || "Manager registration failed"
+      err?.reason || err?.shortMessage || err?.message || "Registration failed"
     );
   }
 };
 
 export const submitSquadOnchain = async (matchday, playerIds) => {
   try {
+    // Step 1 — ensure registered onchain
+    const provider = getInjectedProvider();
+    const accounts = await provider.request({ method: "eth_accounts" });
+    const address = accounts[0]?.toLowerCase();
+
+    if (address) {
+      const readContract = getReadContract();
+      const existing = await readContract.getManager(address);
+
+      if (!existing[3]) {
+        // Not registered — auto-register with localStorage username
+        const username =
+          localStorage.getItem(`worldxi_username_${address}`) ||
+          localStorage.getItem("worldxi_username");
+
+        if (!username) throw new Error("No username found. Please set a manager name first.");
+
+        await silentSwitchToXLayer();
+        const writeContract = await getWriteContract();
+        const regTx = await writeContract.registerManager(username);
+        console.log("Auto-registering manager:", regTx.hash);
+        await regTx.wait();
+        console.log("Manager registered onchain.");
+      }
+
+      // Step 2 — check if squad already submitted
+      const existingSquad = await readContract.getSquad(address, matchday);
+      if (existingSquad[2] === true) {
+        console.log("Squad already submitted for matchday", matchday);
+        return { txHash: "already-submitted", squadHash: existingSquad[0] };
+      }
+    }
+
+    // Step 3 — submit squad
     const squadString = [...playerIds].sort().join(",");
     const squadHash = ethers.keccak256(ethers.toUtf8Bytes(squadString));
+
     await silentSwitchToXLayer();
     const contract = await getWriteContract();
     const tx = await contract.submitSquad(matchday, squadHash);
-    console.log("Squad submission tx:", tx.hash);
+    console.log("Squad tx:", tx.hash);
     await tx.wait();
     return { txHash: tx.hash, squadHash };
   } catch (err) {
     console.error("Squad submission failed:", err);
     if (err.code === 4001) throw new Error("Transaction rejected by user");
+    if (
+      err?.reason === "SquadAlreadySubmitted" ||
+      err?.message?.includes("SquadAlreadySubmitted")
+    ) return { txHash: "already-submitted", squadHash: "" };
     throw new Error(
       err?.reason || err?.shortMessage || err?.message || "Squad submission failed"
     );
@@ -139,11 +189,11 @@ export const submitSquadOnchain = async (matchday, playerIds) => {
 export const debugWalletEnvironment = async () => {
   try {
     const provider = getInjectedProvider();
-    const browserProvider = new ethers.BrowserProvider(provider);
+    const browserProvider = new ethers.BrowserProvider(provider, "any");
     const network = await browserProvider.getNetwork();
     const blockNumber = await browserProvider.getBlockNumber();
-    console.log("Connected Network:", network);
-    console.log("Current Block:", blockNumber);
+    console.log("Network:", network);
+    console.log("Block:", blockNumber);
     return { network, blockNumber };
   } catch (err) {
     console.error("Wallet debug failed:", err);
