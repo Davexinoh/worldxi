@@ -19,33 +19,95 @@ class ErrorBoundary extends Component {
   }
 }
 
+// Shared glass styles
+const glass = {
+  background: "rgba(255,255,255,0.04)",
+  backdropFilter: "blur(16px)",
+  WebkitBackdropFilter: "blur(16px)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  borderRadius: 14,
+};
+
+const glassGreen = {
+  background: "rgba(0,232,122,0.06)",
+  backdropFilter: "blur(16px)",
+  WebkitBackdropFilter: "blur(16px)",
+  border: "1px solid rgba(0,232,122,0.18)",
+  borderRadius: 14,
+};
+
+function PitchBg() {
+  return (
+    <div style={{ position: "absolute", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}>
+      {/* Grass gradient */}
+      <div style={{
+        position: "absolute", inset: 0,
+        background: `
+          radial-gradient(ellipse at 50% 20%, rgba(0,120,50,0.28) 0%, transparent 65%),
+          radial-gradient(ellipse at 50% 90%, rgba(0,80,30,0.18) 0%, transparent 50%)
+        `,
+      }} />
+      {/* Pitch stripes */}
+      <div style={{
+        position: "absolute", inset: 0,
+        backgroundImage: `repeating-linear-gradient(
+          180deg,
+          transparent 0px, transparent 48px,
+          rgba(0,180,70,0.04) 48px, rgba(0,180,70,0.04) 96px
+        )`,
+      }} />
+      {/* Center circle */}
+      <div style={{
+        position: "absolute", top: "22%", left: "50%", transform: "translateX(-50%)",
+        width: 200, height: 200, borderRadius: "50%",
+        border: "1px solid rgba(255,255,255,0.06)",
+      }} />
+      {/* Center dot */}
+      <div style={{
+        position: "absolute", top: "calc(22% + 99px)", left: "50%", transform: "translate(-50%,-50%)",
+        width: 6, height: 6, borderRadius: "50%",
+        background: "rgba(255,255,255,0.1)",
+      }} />
+      {/* Halfway line */}
+      <div style={{
+        position: "absolute", top: "22%", left: "8%", right: "8%",
+        height: 1, background: "rgba(255,255,255,0.05)",
+      }} />
+      {/* Penalty boxes */}
+      <div style={{
+        position: "absolute", top: 0, left: "20%", right: "20%",
+        height: "12%", border: "1px solid rgba(255,255,255,0.05)",
+        borderTop: "none",
+      }} />
+      <div style={{
+        position: "absolute", bottom: 0, left: "20%", right: "20%",
+        height: "12%", border: "1px solid rgba(255,255,255,0.05)",
+        borderBottom: "none",
+      }} />
+    </div>
+  );
+}
+
 function Logo({ size = 48, sub = false }) {
   return (
     <div style={{ textAlign: "center" }}>
       <div style={{
-        fontSize: size,
-        fontWeight: 900,
-        letterSpacing: -2,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 2,
+        fontSize: size, fontWeight: 900, letterSpacing: -2,
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 2,
         marginBottom: sub ? 8 : 0,
       }}>
         <span style={{
-          background: "linear-gradient(135deg, var(--accent), rgba(0,232,122,0.6))",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
+          background: "linear-gradient(135deg, #00E87A, rgba(0,232,122,0.7))",
+          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
         }}>W</span>
-        <span style={{ fontSize: size * 0.85, WebkitTextFillColor: "initial" }}>⚽</span>
+        <span style={{ fontSize: size * 0.85 }}>⚽</span>
         <span style={{
-          background: "linear-gradient(135deg, var(--accent), rgba(0,232,122,0.6))",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
+          background: "linear-gradient(135deg, #00E87A, rgba(0,232,122,0.7))",
+          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
         }}>RLDXI</span>
       </div>
       {sub && (
-        <div style={{ fontSize: 10, color: "var(--grey2)", textTransform: "uppercase", letterSpacing: 2 }}>
+        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: 3 }}>
           Fantasy Football • World Cup 2026
         </div>
       )}
@@ -61,9 +123,7 @@ function VideoSplash({ onDone }) {
   const startVideo = () => {
     if (started) return;
     setStarted(true);
-    if (videoRef.current) {
-      videoRef.current.play().catch(() => onDone());
-    }
+    if (videoRef.current) videoRef.current.play().catch(() => onDone());
     setTimeout(() => setShowSkip(true), 3000);
   };
 
@@ -75,68 +135,52 @@ function VideoSplash({ onDone }) {
   }, [started]);
 
   return (
-    <div
-      onClick={startVideo}
-      style={{
-        position: "fixed", inset: 0, zIndex: 999,
-        background: "#000", overflow: "hidden", cursor: "pointer",
-      }}
-    >
+    <div onClick={startVideo} style={{
+      position: "fixed", inset: 0, zIndex: 999,
+      background: "#000", overflow: "hidden", cursor: "pointer",
+    }}>
       <video
-        ref={videoRef}
-        playsInline
-        preload="auto"
+        ref={videoRef} playsInline preload="auto"
         src="/ed19dd204b248c32c2992d1c77faaf95.mp4"
-        onEnded={onDone}
-        onError={() => setTimeout(onDone, 500)}
+        onEnded={onDone} onError={() => setTimeout(onDone, 500)}
         style={{
-          position: "absolute", inset: 0,
-          width: "100%", height: "100%", objectFit: "cover",
-          opacity: started ? 1 : 0,
-          transition: "opacity 0.5s ease",
+          position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover",
+          opacity: started ? 1 : 0, transition: "opacity 0.5s ease",
         }}
       />
       <div style={{
-        position: "absolute", inset: 0,
-        background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.3) 100%)",
-        zIndex: 1, pointerEvents: "none",
+        position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none",
+        background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%, rgba(0,0,0,0.3) 100%)",
       }} />
-
       {!started && (
         <div style={{
           position: "absolute", inset: 0, zIndex: 3,
-          display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center", gap: 16,
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20,
         }}>
-          <div style={{
-            width: 80, height: 80, borderRadius: "50%",
-            background: "rgba(0,232,122,0.15)",
-            border: "2px solid var(--accent)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 32, animation: "pulse 2s ease-in-out infinite",
-          }}>▶</div>
-          <div style={{
-            fontSize: 11, fontWeight: 600, letterSpacing: 3,
-            textTransform: "uppercase", color: "rgba(255,255,255,0.6)",
-          }}>Tap to enter</div>
+          <Logo size={56} sub={true} />
+          <div style={{ marginTop: 32 }}>
+            <div style={{
+              width: 80, height: 80, borderRadius: "50%",
+              background: "rgba(0,232,122,0.12)", border: "2px solid rgba(0,232,122,0.6)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 28, animation: "pulse 2s ease-in-out infinite",
+              backdropFilter: "blur(8px)",
+            }}>▶</div>
+          </div>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 4, textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>
+            Tap to enter
+          </div>
         </div>
       )}
-
       {started && showSkip && (
-        <div
-          onClick={e => { e.stopPropagation(); onDone(); }}
-          style={{
-            position: "absolute", bottom: 52, left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 3, display: "flex", flexDirection: "column",
-            alignItems: "center", gap: 10, cursor: "pointer",
-          }}
-        >
-          <div style={{
-            fontSize: 11, fontWeight: 600, letterSpacing: 3,
-            textTransform: "uppercase", color: "rgba(255,255,255,0.5)",
-          }}>Tap anywhere to skip</div>
-          <div style={{ width: 120, height: 2, background: "rgba(255,255,255,0.12)", borderRadius: 99, overflow: "hidden" }}>
+        <div onClick={e => { e.stopPropagation(); onDone(); }} style={{
+          position: "absolute", bottom: 52, left: "50%", transform: "translateX(-50%)",
+          zIndex: 3, display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer",
+        }}>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 3, textTransform: "uppercase", color: "rgba(255,255,255,0.4)" }}>
+            Tap to skip
+          </div>
+          <div style={{ width: 120, height: 2, background: "rgba(255,255,255,0.1)", borderRadius: 99, overflow: "hidden" }}>
             <div style={{
               height: "100%", background: "var(--accent)", borderRadius: 99,
               animation: "splashProgress 42s linear forwards",
@@ -146,7 +190,9 @@ function VideoSplash({ onDone }) {
       )}
       <style>{`
         @keyframes splashProgress { from{width:0%} to{width:100%} }
-        @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.08);opacity:0.8} }
+        @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.1);opacity:0.75} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
       `}</style>
     </div>
   );
@@ -157,8 +203,7 @@ function ConnectScreen({ onConnect }) {
   const [error, setError] = useState("");
 
   const handleConnect = async () => {
-    setError("");
-    setLoading(true);
+    setError(""); setLoading(true);
     try {
       const address = await connectWallet();
       onConnect(address);
@@ -174,28 +219,74 @@ function ConnectScreen({ onConnect }) {
       background: "var(--bg)",
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
-      padding: 32,
+      padding: 32, overflow: "hidden",
     }}>
-      <Logo size={76} sub={true} />
-      <div style={{ fontSize: 52, margin: "48px 0", filter: "drop-shadow(0 0 24px rgba(0,232,122,0.2))" }}>🏆</div>
-      <div style={{ width: "100%", maxWidth: 320 }}>
-        <button className="btn-accent" onClick={handleConnect} style={{ opacity: loading ? 0.7 : 1 }}>
-          {loading ? "Connecting..." : "Connect OKX Wallet"}
-        </button>
-        {error && (
-          <div style={{ marginTop: 12, textAlign: "center", fontSize: 12, color: "var(--red)", lineHeight: 1.6 }}>
-            {error}
-          </div>
-        )}
-        <div style={{ marginTop: 14, textAlign: "center", fontSize: 11, color: "var(--grey)", lineHeight: 1.7 }}>
-          Your wallet address is your identity.<br />No email. No password.
-        </div>
-      </div>
+      <PitchBg />
+
+      {/* Glow orb */}
       <div style={{
-        position: "absolute", bottom: 32,
-        fontSize: 11, letterSpacing: 2, textTransform: "uppercase", color: "var(--grey2)",
-      }}>
-        Built on <span style={{ color: "var(--accent)" }}>X Layer</span>
+        position: "absolute", top: "-10%", left: "50%", transform: "translateX(-50%)",
+        width: 400, height: 400, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(0,232,122,0.12) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }} />
+
+      <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 340, animation: "fadeUp 0.6s ease" }}>
+        <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <Logo size={72} sub={true} />
+        </div>
+
+        <div style={{
+          ...glassGreen,
+          padding: 28,
+          boxShadow: "0 8px 48px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+        }}>
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🏆</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "var(--text)", marginBottom: 6 }}>
+              Welcome to WorldXI
+            </div>
+            <div style={{ fontSize: 11, color: "var(--grey)", lineHeight: 1.7 }}>
+              Build your fantasy XI.<br />Compete onchain. Win glory.
+            </div>
+          </div>
+
+          <button
+            onClick={handleConnect}
+            disabled={loading}
+            style={{
+              width: "100%", padding: "14px 20px", borderRadius: 10,
+              background: loading
+                ? "rgba(0,232,122,0.3)"
+                : "linear-gradient(135deg, #00E87A, #00c96a)",
+              color: "#000", border: "none", fontSize: 13, fontWeight: 800,
+              textTransform: "uppercase", letterSpacing: 1.5,
+              cursor: loading ? "not-allowed" : "pointer",
+              boxShadow: loading ? "none" : "0 4px 24px rgba(0,232,122,0.3)",
+              transition: "all 0.2s",
+            }}
+          >
+            {loading ? "Connecting..." : "⚡ Connect OKX Wallet"}
+          </button>
+
+          {error && (
+            <div style={{
+              marginTop: 12, padding: "10px 14px", borderRadius: 8,
+              background: "rgba(255,71,87,0.08)", border: "1px solid rgba(255,71,87,0.2)",
+              fontSize: 11, color: "var(--red)", textAlign: "center", lineHeight: 1.6,
+            }}>
+              {error}
+            </div>
+          )}
+
+          <div style={{ marginTop: 16, textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.25)", lineHeight: 1.8 }}>
+            Your wallet is your identity<br />No email • No password • No data
+          </div>
+        </div>
+
+        <div style={{ marginTop: 20, textAlign: "center", fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: "rgba(255,255,255,0.2)" }}>
+          Powered by <span style={{ color: "var(--accent)" }}>X Layer</span> • OKX Chain
+        </div>
       </div>
     </div>
   );
@@ -210,8 +301,7 @@ function SetUsernameScreen({ wallet, onDone }) {
 
   const handleSave = async () => {
     if (!isValid) return;
-    setSaving(true);
-    setError("");
+    setSaving(true); setError("");
     try {
       localStorage.setItem("worldxi_username", username);
       localStorage.setItem("worldxi_wallet", wallet);
@@ -228,144 +318,193 @@ function SetUsernameScreen({ wallet, onDone }) {
       background: "var(--bg)",
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
-      padding: 32,
+      padding: 32, overflow: "hidden",
     }}>
-      <Logo size={56} />
-      <div style={{ marginTop: 40, width: "100%", maxWidth: 320 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--grey2)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>
-          Wallet
+      <PitchBg />
+      <div style={{ position: "absolute", top: "-5%", left: "50%", transform: "translateX(-50%)", width: 350, height: 350, borderRadius: "50%", background: "radial-gradient(circle, rgba(0,232,122,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
+
+      <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 340, animation: "fadeUp 0.5s ease" }}>
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <Logo size={52} />
         </div>
+
         <div style={{
-          padding: 12, borderRadius: 6, background: "rgba(0,232,122,0.05)",
-          border: "1px solid rgba(0,232,122,0.2)",
-          fontSize: 11, fontFamily: "monospace", color: "var(--accent)",
-          marginBottom: 20, wordBreak: "break-all",
+          ...glass,
+          padding: 24,
+          boxShadow: "0 8px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)",
         }}>
-          {wallet}
+          <div style={{ fontSize: 13, fontWeight: 800, color: "var(--text)", marginBottom: 4 }}>
+            Choose Your Manager Name
+          </div>
+          <div style={{ fontSize: 11, color: "var(--grey)", marginBottom: 20, lineHeight: 1.6 }}>
+            This is how you'll appear on the leaderboard
+          </div>
+
+          {/* Wallet badge */}
+          <div style={{
+            ...glassGreen, padding: "8px 12px", marginBottom: 16,
+            fontSize: 10, fontFamily: "monospace", color: "var(--accent)",
+            wordBreak: "break-all", borderRadius: 8,
+          }}>
+            {wallet}
+          </div>
+
+          <input
+            type="text"
+            placeholder="e.g. TacticalGenius_99"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleSave()}
+            style={{
+              width: "100%", padding: "12px 14px", borderRadius: 8,
+              border: username.length > 0
+                ? isValid ? "1px solid rgba(0,232,122,0.4)" : "1px solid rgba(255,71,87,0.4)"
+                : "1px solid rgba(255,255,255,0.1)",
+              background: "rgba(255,255,255,0.04)",
+              color: "var(--text)", fontSize: 13, marginBottom: 8,
+              boxSizing: "border-box", outline: "none",
+              transition: "border 0.2s",
+            }}
+          />
+
+          <div style={{ fontSize: 10, color: "var(--grey)", marginBottom: 16 }}>
+            3–20 characters • Letters, numbers, underscores only
+          </div>
+
+          {error && (
+            <div style={{
+              marginBottom: 12, padding: "8px 12px", borderRadius: 8,
+              background: "rgba(255,71,87,0.08)", border: "1px solid rgba(255,71,87,0.2)",
+              fontSize: 11, color: "var(--red)",
+            }}>
+              {error}
+            </div>
+          )}
+
+          <button
+            onClick={handleSave}
+            disabled={!isValid || saving}
+            style={{
+              width: "100%", padding: "13px", borderRadius: 10,
+              background: isValid
+                ? "linear-gradient(135deg, #00E87A, #00c96a)"
+                : "rgba(255,255,255,0.06)",
+              color: isValid ? "#000" : "var(--grey2)",
+              border: "none", fontSize: 13, fontWeight: 800,
+              cursor: isValid ? "pointer" : "not-allowed",
+              opacity: saving ? 0.7 : 1,
+              textTransform: "uppercase", letterSpacing: 1.5,
+              boxShadow: isValid ? "0 4px 20px rgba(0,232,122,0.25)" : "none",
+              transition: "all 0.2s",
+            }}
+          >
+            {saving ? "Saving..." : "Enter the Pitch →"}
+          </button>
         </div>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--grey2)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>
-          Manager Name
-        </div>
-        <input
-          type="text"
-          placeholder="3-20 chars (a-z, 0-9, _)"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          style={{
-            width: "100%", padding: 12, borderRadius: 6,
-            border: "1px solid var(--grey2)", background: "var(--bg)",
-            color: "var(--text)", fontSize: 12, marginBottom: 12,
-            boxSizing: "border-box",
-          }}
-        />
-        {error && (
-          <div style={{ fontSize: 11, color: "var(--red)", marginBottom: 12 }}>{error}</div>
-        )}
-        <button
-          onClick={handleSave}
-          disabled={!isValid || saving}
-          style={{
-            width: "100%", padding: 12, borderRadius: 6,
-            background: isValid ? "var(--accent)" : "var(--grey2)",
-            color: "#000", border: "none", fontSize: 12, fontWeight: 700,
-            cursor: isValid ? "pointer" : "not-allowed", opacity: saving ? 0.7 : 1,
-            textTransform: "uppercase", letterSpacing: 1,
-          }}
-        >
-          {saving ? "Saving..." : "Confirm Manager Name"}
-        </button>
       </div>
     </div>
   );
 }
 
-function HomeScreen({ username }) {
+function HomeScreen({ username, squadCount }) {
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", position: "relative", overflow: "hidden" }}>
-      {/* Blurred pitch background */}
-      <div style={{
-        position: "absolute", inset: 0, zIndex: 0,
-        background: `
-          radial-gradient(ellipse at 50% 30%, rgba(0,100,40,0.35) 0%, transparent 70%),
-          repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 40px,
-            rgba(0,150,60,0.06) 40px,
-            rgba(0,150,60,0.06) 41px
-          ),
-          repeating-linear-gradient(
-            90deg,
-            transparent,
-            transparent 40px,
-            rgba(0,150,60,0.06) 40px,
-            rgba(0,150,60,0.06) 41px
-          )
-        `,
-      }} />
-      {/* Center circle */}
-      <div style={{
-        position: "absolute", top: "18%", left: "50%", transform: "translateX(-50%)",
-        width: 180, height: 180, borderRadius: "50%",
-        border: "1px solid rgba(0,200,80,0.12)", zIndex: 0,
-      }} />
-      {/* Center line */}
-      <div style={{
-        position: "absolute", top: "27%", left: "10%", right: "10%",
-        height: 1, background: "rgba(0,200,80,0.1)", zIndex: 0,
-      }} />
+      <PitchBg />
 
-      <div style={{ position: "relative", zIndex: 1, padding: 20 }}>
-        {/* Welcome card */}
+      <div style={{ position: "relative", zIndex: 1, padding: "20px 16px" }}>
+        {/* Manager card */}
         <div style={{
-          marginBottom: 24, padding: "20px 16px", borderRadius: 12,
-          background: "rgba(8,14,26,0.7)", backdropFilter: "blur(12px)",
-          border: "1px solid rgba(0,232,122,0.15)", textAlign: "center",
+          ...glassGreen,
+          padding: "22px 20px",
+          marginBottom: 16,
+          textAlign: "center",
+          boxShadow: "0 4px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
+          animation: "fadeUp 0.4s ease",
         }}>
-          <div style={{ fontSize: 32, marginBottom: 8 }}>🏆</div>
-          <div style={{ fontSize: 11, color: "var(--grey)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 4 }}>
+          <div style={{ fontSize: 36, marginBottom: 10 }}>🏆</div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 6 }}>
             Manager
           </div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: "var(--accent)" }}>{username}</div>
-          <div style={{ fontSize: 10, color: "var(--grey)", marginTop: 6, letterSpacing: 1 }}>
-            WORLD CUP 2026 • X LAYER
+          <div style={{
+            fontSize: 24, fontWeight: 900, color: "var(--accent)",
+            marginBottom: 4,
+            textShadow: "0 0 20px rgba(0,232,122,0.4)",
+          }}>
+            {username}
+          </div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", letterSpacing: 2, textTransform: "uppercase" }}>
+            World Cup 2026 • X Layer
           </div>
         </div>
 
         {/* Stats row */}
-        <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+        <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
           {[
-            { label: "Points", value: "0", icon: "⭐" },
-            { label: "Rank", value: "—", icon: "📊" },
-            { label: "Squad", value: "0/15", icon: "👥" },
+            { label: "Points", value: "0", icon: "⭐", color: "#FFD700" },
+            { label: "Rank", value: "—", icon: "📊", color: "var(--accent)" },
+            { label: "Squad", value: `${squadCount}/15`, icon: "👥", color: squadCount === 15 ? "var(--accent)" : "var(--grey)" },
           ].map(stat => (
             <div key={stat.label} style={{
-              flex: 1, padding: "14px 8px", borderRadius: 10, textAlign: "center",
-              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+              flex: 1, padding: "14px 8px", borderRadius: 12, textAlign: "center",
+              ...glass,
+              boxShadow: "0 2px 16px rgba(0,0,0,0.2)",
             }}>
-              <div style={{ fontSize: 18, marginBottom: 4 }}>{stat.icon}</div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: "var(--text)", marginBottom: 2 }}>{stat.value}</div>
-              <div style={{ fontSize: 9, color: "var(--grey)", textTransform: "uppercase", letterSpacing: 1 }}>{stat.label}</div>
+              <div style={{ fontSize: 20, marginBottom: 6 }}>{stat.icon}</div>
+              <div style={{ fontSize: 17, fontWeight: 900, color: stat.color, marginBottom: 3 }}>{stat.value}</div>
+              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: 1 }}>{stat.label}</div>
             </div>
           ))}
         </div>
 
+        {/* Deadline banner */}
+        <div style={{
+          ...glass,
+          padding: "12px 16px",
+          marginBottom: 12,
+          display: "flex", alignItems: "center", gap: 12,
+          borderColor: "rgba(255,193,7,0.2)",
+          background: "rgba(255,193,7,0.04)",
+        }}>
+          <div style={{ fontSize: 22 }}>⏰</div>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#FFC107", marginBottom: 2 }}>Deadline: June 11, 2026</div>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", lineHeight: 1.5 }}>
+              Lock your squad before World Cup kickoff
+            </div>
+          </div>
+        </div>
+
         {/* Info cards */}
         {[
-          { title: "Matchday 1", body: "World Cup 2026 kicks off June 11. Build your 15-man squad before the deadline.", icon: "📅" },
-          { title: "How to Score", body: "Goals, assists, clean sheets. Captain earns 2× points. Country bonus: +10% for 3+ players from same nation.", icon: "📋" },
+          {
+            icon: "⚽", title: "How to Play",
+            body: "Pick 15 players within 100 OKB budget. Max 3 from any nation. Set captain (2× points) and vice-captain.",
+            color: "rgba(0,232,122,0.15)",
+          },
+          {
+            icon: "🏅", title: "Scoring",
+            body: "Goals, assists, clean sheets all earn points. Country bonus: +10% if 3+ players from same nation in your XI.",
+            color: "rgba(255,193,7,0.1)",
+          },
+          {
+            icon: "🔗", title: "Onchain",
+            body: "Your squad is submitted to X Layer. Transparent, verifiable, unstoppable.",
+            color: "rgba(100,100,255,0.08)",
+          },
         ].map(card => (
           <div key={card.title} style={{
-            marginBottom: 12, padding: "14px 16px", borderRadius: 10,
-            background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
-            display: "flex", gap: 12, alignItems: "flex-start",
+            marginBottom: 10, padding: "14px 16px", borderRadius: 12,
+            background: card.color,
+            border: "1px solid rgba(255,255,255,0.06)",
+            display: "flex", gap: 14, alignItems: "flex-start",
+            backdropFilter: "blur(8px)",
           }}>
-            <div style={{ fontSize: 20, flexShrink: 0 }}>{card.icon}</div>
+            <div style={{ fontSize: 22, flexShrink: 0 }}>{card.icon}</div>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "var(--text)", marginBottom: 4, letterSpacing: 0.3 }}>
                 {card.title}
               </div>
-              <div style={{ fontSize: 11, color: "var(--grey)", lineHeight: 1.6 }}>{card.body}</div>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", lineHeight: 1.7 }}>{card.body}</div>
             </div>
           </div>
         ))}
@@ -376,12 +515,20 @@ function HomeScreen({ username }) {
 
 function TransfersScreen() {
   return (
-    <div style={{ padding: "16px", background: "var(--bg)", minHeight: "100vh" }}>
-      <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--accent)", marginBottom: "16px", textTransform: "uppercase", letterSpacing: 1 }}>
-        Transfers
-      </div>
-      <div style={{ fontSize: "12px", color: "var(--grey)" }}>
-        Coming soon...
+    <div style={{ padding: "20px 16px", background: "var(--bg)", minHeight: "100vh", position: "relative", overflow: "hidden" }}>
+      <PitchBg />
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <div style={{ fontSize: 11, color: "var(--grey)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 4 }}>
+          WorldXI
+        </div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: "var(--text)", marginBottom: 24 }}>Transfers</div>
+        <div style={{ ...glass, padding: "32px 20px", textAlign: "center" }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🔄</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>Coming Soon</div>
+          <div style={{ fontSize: 11, color: "var(--grey)", lineHeight: 1.7 }}>
+            Swap players between matchdays.<br />Strategy starts here.
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -389,12 +536,20 @@ function TransfersScreen() {
 
 function LeaderboardScreen() {
   return (
-    <div style={{ padding: "16px", background: "var(--bg)", minHeight: "100vh" }}>
-      <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--accent)", marginBottom: "16px", textTransform: "uppercase", letterSpacing: 1 }}>
-        Leaderboard
-      </div>
-      <div style={{ fontSize: "12px", color: "var(--grey)" }}>
-        Coming soon...
+    <div style={{ padding: "20px 16px", background: "var(--bg)", minHeight: "100vh", position: "relative", overflow: "hidden" }}>
+      <PitchBg />
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <div style={{ fontSize: 11, color: "var(--grey)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 4 }}>
+          WorldXI
+        </div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: "var(--text)", marginBottom: 24 }}>Leaderboard</div>
+        <div style={{ ...glass, padding: "32px 20px", textAlign: "center" }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🏆</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>Coming Soon</div>
+          <div style={{ fontSize: 11, color: "var(--grey)", lineHeight: 1.7 }}>
+            Global rankings go live<br />when World Cup kicks off.
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -405,6 +560,7 @@ function WorldXIAppInner() {
   const [username, setUsername] = useState(() => localStorage.getItem("worldxi_username") || null);
   const [activeTab, setActiveTab] = useState("home");
   const [musicPlaying, setMusicPlaying] = useState(false);
+  const [showLogout, setShowLogout] = useState(false);
   const [squad, setSquad] = useState({
     selectedPlayerIds: [],
     captain: null,
@@ -414,7 +570,6 @@ function WorldXIAppInner() {
   const audioRef = useRef(null);
   const musicStarted = useRef(false);
 
-  // Start music once after first user interaction
   useEffect(() => {
     if (!musicStarted.current && audioRef.current) {
       musicStarted.current = true;
@@ -430,7 +585,6 @@ function WorldXIAppInner() {
     }
   }, []);
 
-  // Controlled play/pause — only responds to explicit toggle
   useEffect(() => {
     if (!audioRef.current) return;
     if (musicPlaying) {
@@ -440,7 +594,6 @@ function WorldXIAppInner() {
     }
   }, [musicPlaying]);
 
-  // Restore username from chain if missing
   useEffect(() => {
     const savedWallet = localStorage.getItem("worldxi_wallet");
     const savedUsername = localStorage.getItem("worldxi_username");
@@ -468,6 +621,15 @@ function WorldXIAppInner() {
     } catch (_) {}
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("worldxi_wallet");
+    localStorage.removeItem("worldxi_username");
+    localStorage.removeItem("worldxi_visited");
+    setWallet(null);
+    setUsername(null);
+    setShowLogout(false);
+  };
+
   const handleUsernameSet = (name) => setUsername(name);
 
   if (!wallet) return <ConnectScreen onConnect={handleConnect} />;
@@ -476,11 +638,15 @@ function WorldXIAppInner() {
   let tabContent;
   switch (activeTab) {
     case "home":
-      tabContent = <HomeScreen username={username} />;
+      tabContent = <HomeScreen username={username} squadCount={squad.selectedPlayerIds.length} />;
       break;
     case "squad":
       tabContent = (
-        <Suspense fallback={<div style={{ padding: "20px", color: "var(--grey)", textAlign: "center" }}>Loading squad builder...</div>}>
+        <Suspense fallback={
+          <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--grey)", fontSize: 12 }}>
+            Loading squad builder...
+          </div>
+        }>
           <SquadBuilder squad={squad} setSquad={setSquad} />
         </Suspense>
       );
@@ -492,7 +658,7 @@ function WorldXIAppInner() {
       tabContent = <LeaderboardScreen />;
       break;
     default:
-      tabContent = <HomeScreen username={username} />;
+      tabContent = <HomeScreen username={username} squadCount={squad.selectedPlayerIds.length} />;
   }
 
   return (
@@ -501,10 +667,14 @@ function WorldXIAppInner() {
         {tabContent}
       </div>
 
-      {/* Bottom nav */}
+      {/* Bottom nav — glassmorphism */}
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0,
-        height: "60px", background: "var(--bg)", borderTop: "1px solid var(--grey2)",
+        height: "62px",
+        background: "rgba(8,14,26,0.85)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderTop: "1px solid rgba(255,255,255,0.06)",
         display: "flex", justifyContent: "space-around", alignItems: "center",
         zIndex: 100,
       }}>
@@ -512,39 +682,112 @@ function WorldXIAppInner() {
           { id: "home", label: "Home", icon: "🏠" },
           { id: "squad", label: "Squad", icon: "⚽" },
           { id: "transfers", label: "Transfers", icon: "🔄" },
-          { id: "leaderboard", label: "Leaderboard", icon: "🏆" },
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
+          { id: "leaderboard", label: "Board", icon: "🏆" },
+        ].map(tab => {
+          const active = activeTab === tab.id;
+          return (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
               flex: 1, height: "100%", border: "none", background: "transparent",
               display: "flex", flexDirection: "column", alignItems: "center",
-              justifyContent: "center", gap: "4px", cursor: "pointer",
-              color: activeTab === tab.id ? "var(--accent)" : "var(--grey2)",
-              fontSize: "11px", fontWeight: 600, textTransform: "uppercase",
-              letterSpacing: 0.5,
-            }}
-          >
-            <div style={{ fontSize: "16px" }}>{tab.icon}</div>
-            <div>{tab.label}</div>
-          </button>
-        ))}
+              justifyContent: "center", gap: 3, cursor: "pointer",
+              color: active ? "var(--accent)" : "rgba(255,255,255,0.3)",
+              fontSize: "10px", fontWeight: active ? 700 : 500,
+              textTransform: "uppercase", letterSpacing: 0.5,
+              transition: "color 0.15s",
+              position: "relative",
+            }}>
+              {active && (
+                <div style={{
+                  position: "absolute", top: 0, left: "25%", right: "25%",
+                  height: 2, background: "var(--accent)", borderRadius: "0 0 2px 2px",
+                }} />
+              )}
+              <div style={{ fontSize: "18px" }}>{tab.icon}</div>
+              <div>{tab.label}</div>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Music toggle */}
-      <button
-        onClick={() => setMusicPlaying(p => !p)}
-        style={{
-          position: "fixed", top: "12px", right: "12px", zIndex: 101,
-          width: "40px", height: "40px", borderRadius: "50%",
-          background: "rgba(0,232,122,0.1)", border: "1px solid var(--grey2)",
-          color: "var(--accent)", fontSize: "16px", cursor: "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}
-      >
-        {musicPlaying ? "🔊" : "🔇"}
-      </button>
+      {/* Top-right controls */}
+      <div style={{
+        position: "fixed", top: 12, right: 12, zIndex: 101,
+        display: "flex", gap: 8, alignItems: "center",
+      }}>
+        {/* Music toggle */}
+        <button
+          onClick={() => setMusicPlaying(p => !p)}
+          style={{
+            width: 38, height: 38, borderRadius: 10,
+            background: "rgba(8,14,26,0.7)",
+            backdropFilter: "blur(12px)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            color: musicPlaying ? "var(--accent)" : "rgba(255,255,255,0.3)",
+            fontSize: 15, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transition: "all 0.15s",
+          }}
+        >
+          {musicPlaying ? "🔊" : "🔇"}
+        </button>
+
+        {/* Profile / logout */}
+        <div style={{ position: "relative" }}>
+          <button
+            onClick={() => setShowLogout(p => !p)}
+            style={{
+              height: 38, padding: "0 12px", borderRadius: 10,
+              background: "rgba(8,14,26,0.7)",
+              backdropFilter: "blur(12px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              color: "var(--text)", fontSize: 11, fontWeight: 700,
+              cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
+              maxWidth: 120, overflow: "hidden",
+            }}
+          >
+            <span style={{ fontSize: 14 }}>👤</span>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--accent)" }}>
+              {username}
+            </span>
+          </button>
+
+          {showLogout && (
+            <div style={{
+              position: "absolute", top: 44, right: 0,
+              ...glass,
+              padding: 6, minWidth: 140,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+            }}>
+              <div style={{
+                padding: "6px 12px", fontSize: 10, color: "rgba(255,255,255,0.3)",
+                borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 4,
+              }}>
+                {wallet?.slice(0, 6)}...{wallet?.slice(-4)}
+              </div>
+              <button
+                onClick={handleLogout}
+                style={{
+                  width: "100%", padding: "8px 12px", borderRadius: 8,
+                  background: "rgba(255,71,87,0.08)", border: "none",
+                  color: "var(--red)", fontSize: 12, fontWeight: 700,
+                  cursor: "pointer", textAlign: "left", display: "flex",
+                  alignItems: "center", gap: 8,
+                }}
+              >
+                🚪 Disconnect
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Click outside to close logout menu */}
+      {showLogout && (
+        <div
+          onClick={() => setShowLogout(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 100 }}
+        />
+      )}
 
       <audio ref={audioRef} src="/waka-waka.mp3" loop style={{ display: "none" }} />
     </div>
@@ -565,7 +808,7 @@ export default function App() {
     <ErrorBoundary>
       <style>{`
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: "Inter", sans-serif; }
+        body { font-family: "Inter", -apple-system, sans-serif; background: #080e1a; }
         :root {
           --bg: #080e1a;
           --text: #ffffff;
@@ -574,20 +817,14 @@ export default function App() {
           --accent: #00E87A;
           --red: #FF4757;
         }
-        .btn-accent {
-          width: 100%;
-          padding: 14px;
-          border-radius: 8px;
-          background: var(--accent);
-          color: #000;
-          border: none;
-          font-size: 14px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          cursor: pointer;
-        }
-        .btn-accent:hover { opacity: 0.9; }
+        input::placeholder { color: rgba(255,255,255,0.25); }
+        select option { background: #080e1a; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.08);opacity:0.8} }
+        @keyframes splashProgress { from{width:0%} to{width:100%} }
       `}</style>
 
       {showSplash ? (
