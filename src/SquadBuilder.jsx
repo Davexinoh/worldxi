@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { NATIONS, getAllPlayers } from "./players.js";
+import { NATIONS } from "./players.js";
 import PlayerPickerModal from "./PlayerPickerModal.jsx";
 import Pitch from "./Pitch.jsx";
 import CaptainSelector from "./CaptainSelector.jsx";
+import { submitSquadOnchain } from "./wallet.js";
 
 const FORMATIONS = [
   { name: "4-3-3", gk: 1, def: 4, mid: 3, fwd: 3 },
@@ -13,51 +14,60 @@ const FORMATIONS = [
 ];
 
 const BUDGET_TOTAL = 100;
+const MATCHDAY = 1;
+
+const GLASS = {
+  background: "rgba(255,255,255,0.04)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  borderRadius: 12,
+};
+
+const GLASS_GREEN = {
+  background: "rgba(0,232,122,0.06)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+  border: "1px solid rgba(0,232,122,0.2)",
+  borderRadius: 12,
+};
 
 export default function SquadBuilder({ squad, setSquad }) {
   const [showPickerModal, setShowPickerModal] = useState(false);
   const [formation, setFormation] = useState(FORMATIONS[0]);
+  const [locking, setLocking] = useState(false);
+  const [lockStatus, setLockStatus] = useState(null); // null | "success" | "error"
+  const [lockMsg, setLockMsg] = useState("");
+  const [txHash, setTxHash] = useState(null);
 
-  // Budget calculation
-  const budgetSpent = squad.selectedPlayerIds.reduce((sum, playerId) => {
-    const player = findPlayerById(playerId);
-    return sum + (player ? player.price : 0);
+  const budgetSpent = squad.selectedPlayerIds.reduce((sum, id) => {
+    const p = findPlayerById(id);
+    return sum + (p ? p.price : 0);
   }, 0);
   const budgetRemaining = BUDGET_TOTAL - budgetSpent;
+  const budgetPct = Math.min((budgetSpent / BUDGET_TOTAL) * 100, 100);
 
-  // Find player by ID
   function findPlayerById(id) {
     for (const nation of Object.values(NATIONS)) {
-      const player = nation.find(p => p.id === id);
-      if (player) return player;
+      const p = nation.find(p => p.id === id);
+      if (p) return p;
     }
     return null;
   }
 
-  // Add player
   function handleAddPlayer(playerId) {
     if (squad.selectedPlayerIds.includes(playerId)) return;
-    
     const player = findPlayerById(playerId);
     if (!player) return;
     if (budgetRemaining < player.price) return;
 
-    // Full squad position limits
-const POSITION_LIMITS = {
-  GK: 2,
-  DEF: 5,
-  MID: 5,
-  FWD: 3,
-};
+    const POSITION_LIMITS = { GK: 2, DEF: 5, MID: 5, FWD: 3 };
+    const posCount = squad.selectedPlayerIds.filter(id => {
+      const p = findPlayerById(id);
+      return p && p.pos === player.pos;
+    }).length;
+    if (posCount >= POSITION_LIMITS[player.pos]) return;
 
-const posCount = squad.selectedPlayerIds.filter(id => {
-  const p = findPlayerById(id);
-  return p && p.pos === player.pos;
-}).length;
-
-if (posCount >= POSITION_LIMITS[player.pos]) return;
-
-    // Nation limit (max 3)
     const nationCount = squad.selectedPlayerIds.filter(id => {
       const p = findPlayerById(id);
       return p && p.nation === player.nation;
@@ -66,11 +76,10 @@ if (posCount >= POSITION_LIMITS[player.pos]) return;
 
     setSquad(prev => ({
       ...prev,
-      selectedPlayerIds: [...prev.selectedPlayerIds, playerId]
+      selectedPlayerIds: [...prev.selectedPlayerIds, playerId],
     }));
   }
 
-  // Remove player
   function handleRemovePlayer(playerId) {
     setSquad(prev => ({
       ...prev,
@@ -80,14 +89,31 @@ if (posCount >= POSITION_LIMITS[player.pos]) return;
     }));
   }
 
-  // Swap players on pitch
-  function handleSwapPlayers(playerId1, playerId2) {
+  function handleSwapPlayers(id1, id2) {
     const ids = [...squad.selectedPlayerIds];
-    const idx1 = ids.indexOf(playerId1);
-    const idx2 = ids.indexOf(playerId2);
-    if (idx1 >= 0 && idx2 >= 0) {
-      [ids[idx1], ids[idx2]] = [ids[idx2], ids[idx1]];
+    const i1 = ids.indexOf(id1);
+    const i2 = ids.indexOf(id2);
+    if (i1 >= 0 && i2 >= 0) {
+      [ids[i1], ids[i2]] = [ids[i2], ids[i1]];
       setSquad(prev => ({ ...prev, selectedPlayerIds: ids }));
+    }
+  }
+
+  async function handleLockSquad() {
+    if (locking || lockStatus === "success") return;
+    setLocking(true);
+    setLockStatus(null);
+    setLockMsg("");
+    try {
+      const result = await submitSquadOnchain(MATCHDAY, squad.selectedPlayerIds);
+      setTxHash(result.txHash);
+      setLockStatus("success");
+      setLockMsg("Squad locked onchain!");
+    } catch (err) {
+      setLockStatus("error");
+      setLockMsg(err.message || "Transaction failed. Try again.");
+    } finally {
+      setLocking(false);
     }
   }
 
@@ -95,73 +121,93 @@ if (posCount >= POSITION_LIMITS[player.pos]) return;
   const canLockSquad = isSquadComplete && squad.captain && squad.viceCaptain;
 
   return (
-    <div style={{ padding: "16px", background: "var(--bg)", minHeight: "100vh" }}>
+    <div style={{
+      padding: "16px",
+      background: "var(--bg)",
+      minHeight: "100vh",
+      backgroundImage: `
+        radial-gradient(ellipse at 50% 0%, rgba(0,100,40,0.2) 0%, transparent 60%)
+      `,
+    }}>
+
+      {/* Header */}
+      <div style={{ marginBottom: 16, textAlign: "center" }}>
+        <div style={{ fontSize: 11, color: "var(--grey)", textTransform: "uppercase", letterSpacing: 2 }}>
+          Squad Builder
+        </div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: "var(--text)", marginTop: 2 }}>
+          <span style={{ color: "var(--accent)" }}>{squad.selectedPlayerIds.length}</span>
+          <span style={{ color: "var(--grey2)" }}>/15</span>
+          <span style={{ fontSize: 13, color: "var(--grey)", fontWeight: 400, marginLeft: 8 }}>players</span>
+        </div>
+      </div>
+
       {/* Formation Selector */}
-      <div style={{ marginBottom: "20px" }}>
-        <div style={{ fontSize: "12px", color: "var(--grey2)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: 1 }}>
+      <div style={{ ...GLASS, padding: "12px 14px", marginBottom: 12 }}>
+        <div style={{ fontSize: 10, color: "var(--grey)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 1.5 }}>
           Formation
         </div>
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-          {FORMATIONS.map(f => (
-            <button
-              key={f.name}
-              onClick={() => setFormation(f)}
-              style={{
-                padding: "8px 12px",
-                borderRadius: "4px",
-                border: formation.name === f.name ? "2px solid var(--accent)" : "1px solid var(--grey2)",
-                background: formation.name === f.name ? "rgba(0,232,122,0.1)" : "transparent",
-                color: formation.name === f.name ? "var(--accent)" : "var(--grey)",
-                fontSize: "11px",
-                fontWeight: 600,
-                cursor: "pointer",
-                textTransform: "uppercase",
-              }}
-            >
-              {f.name}
-            </button>
-          ))}
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {FORMATIONS.map(f => {
+            const active = formation.name === f.name;
+            return (
+              <button
+                key={f.name}
+                onClick={() => setFormation(f)}
+                style={{
+                  padding: "7px 12px",
+                  borderRadius: 6,
+                  border: active ? "1px solid var(--accent)" : "1px solid rgba(255,255,255,0.08)",
+                  background: active ? "rgba(0,232,122,0.12)" : "rgba(255,255,255,0.03)",
+                  color: active ? "var(--accent)" : "var(--grey)",
+                  fontSize: 11, fontWeight: 700,
+                  cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5,
+                  transition: "all 0.15s",
+                }}
+              >
+                {f.name}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Budget Bar */}
-      <div style={{ marginBottom: "20px", padding: "12px", borderRadius: "8px", background: "rgba(0,232,122,0.05)", border: "1px solid rgba(0,232,122,0.2)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "12px" }}>
-          <span style={{ color: "var(--grey)" }}>Budget Used</span>
-          <span style={{ color: budgetRemaining < 10 ? "var(--red)" : "var(--accent)", fontWeight: 600 }}>
+      <div style={{ ...GLASS_GREEN, padding: "12px 14px", marginBottom: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 12 }}>
+          <span style={{ color: "var(--grey)", fontWeight: 600 }}>Budget</span>
+          <span style={{ color: budgetRemaining < 10 ? "var(--red)" : "var(--accent)", fontWeight: 700 }}>
             {budgetSpent.toFixed(1)} / {BUDGET_TOTAL} OKB
           </span>
         </div>
-        <div style={{ width: "100%", height: "6px", background: "var(--grey2)", borderRadius: "3px", overflow: "hidden" }}>
-          <div
-            style={{
-              height: "100%",
-              width: `${(budgetSpent / BUDGET_TOTAL) * 100}%`,
-              background: budgetRemaining < 10 ? "var(--red)" : "var(--accent)",
-              transition: "width 0.2s ease",
-            }}
-          />
+        <div style={{ width: "100%", height: 5, background: "rgba(255,255,255,0.08)", borderRadius: 99, overflow: "hidden" }}>
+          <div style={{
+            height: "100%",
+            width: `${budgetPct}%`,
+            background: budgetRemaining < 10
+              ? "linear-gradient(90deg, #FF4757, #ff6b6b)"
+              : "linear-gradient(90deg, #00E87A, #00c96a)",
+            borderRadius: 99,
+            transition: "width 0.3s ease",
+          }} />
         </div>
-        <div style={{ marginTop: "8px", fontSize: "11px", color: "var(--grey)", textAlign: "right" }}>
+        <div style={{ marginTop: 6, fontSize: 10, color: "var(--grey)", textAlign: "right" }}>
           {budgetRemaining.toFixed(1)} OKB remaining
         </div>
       </div>
 
-      {/* Squad Counter */}
-      <div style={{ marginBottom: "20px", fontSize: "14px", color: "var(--grey)", textAlign: "center" }}>
-        <span style={{ color: "var(--accent)", fontWeight: 600 }}>{squad.selectedPlayerIds.length}</span>/15 Players
-      </div>
-
       {/* Pitch */}
-      <Pitch
-        selectedPlayerIds={squad.selectedPlayerIds}
-        formation={formation}
-        findPlayerById={findPlayerById}
-        onSwap={handleSwapPlayers}
-        onRemove={handleRemovePlayer}
-        captain={squad.captain}
-        viceCaptain={squad.viceCaptain}
-      />
+      <div style={{ ...GLASS, padding: 0, overflow: "hidden", marginBottom: 12 }}>
+        <Pitch
+          selectedPlayerIds={squad.selectedPlayerIds}
+          formation={formation}
+          findPlayerById={findPlayerById}
+          onSwap={handleSwapPlayers}
+          onRemove={handleRemovePlayer}
+          captain={squad.captain}
+          viceCaptain={squad.viceCaptain}
+        />
+      </div>
 
       {/* Add Players Button */}
       {!isSquadComplete && (
@@ -169,57 +215,119 @@ if (posCount >= POSITION_LIMITS[player.pos]) return;
           onClick={() => setShowPickerModal(true)}
           style={{
             width: "100%",
-            marginTop: "20px",
+            marginBottom: 12,
             padding: "14px",
-            borderRadius: "8px",
-            background: "var(--accent)",
+            borderRadius: 10,
+            background: "linear-gradient(135deg, #00E87A, #00c96a)",
             color: "#000",
             border: "none",
-            fontSize: "14px",
-            fontWeight: 700,
+            fontSize: 13,
+            fontWeight: 800,
             textTransform: "uppercase",
-            letterSpacing: 1,
+            letterSpacing: 1.5,
             cursor: "pointer",
+            boxShadow: "0 4px 24px rgba(0,232,122,0.25)",
           }}
         >
-          Add Players
+          + Add Players ({15 - squad.selectedPlayerIds.length} remaining)
         </button>
       )}
 
-      {/* Captain/Vice-Captain Selector */}
+      {/* Captain Selector */}
       {isSquadComplete && (
-        <CaptainSelector
-          squad={squad}
-          setSquad={setSquad}
-          selectedPlayerIds={squad.selectedPlayerIds}
-          findPlayerById={findPlayerById}
-        />
+        <div style={{ ...GLASS, padding: "14px", marginBottom: 12 }}>
+          <CaptainSelector
+            squad={squad}
+            setSquad={setSquad}
+            selectedPlayerIds={squad.selectedPlayerIds}
+            findPlayerById={findPlayerById}
+          />
+        </div>
       )}
 
-      {/* Lock Squad Button */}
-      {canLockSquad && (
+      {/* Lock Squad */}
+      {canLockSquad && lockStatus !== "success" && (
         <button
-          onClick={() => {
-            console.log("Lock squad:", squad);
-            // TODO: Call submitSquadOnchain()
-          }}
+          onClick={handleLockSquad}
+          disabled={locking}
           style={{
             width: "100%",
-            marginTop: "16px",
-            padding: "14px",
-            borderRadius: "8px",
-            background: "var(--accent)",
+            padding: "15px",
+            borderRadius: 10,
+            background: locking
+              ? "rgba(0,232,122,0.3)"
+              : "linear-gradient(135deg, #00E87A, #00c96a)",
             color: "#000",
             border: "none",
-            fontSize: "14px",
-            fontWeight: 700,
+            fontSize: 13,
+            fontWeight: 800,
             textTransform: "uppercase",
-            letterSpacing: 1,
-            cursor: "pointer",
+            letterSpacing: 1.5,
+            cursor: locking ? "not-allowed" : "pointer",
+            boxShadow: locking ? "none" : "0 4px 32px rgba(0,232,122,0.35)",
+            transition: "all 0.2s",
+            marginBottom: 8,
           }}
         >
-          🔒 Lock Squad
+          {locking ? "⏳ Submitting Onchain..." : "🔒 Lock Squad"}
         </button>
+      )}
+
+      {/* Success state */}
+      {lockStatus === "success" && (
+        <div style={{
+          ...GLASS_GREEN,
+          padding: "16px",
+          textAlign: "center",
+          marginBottom: 8,
+        }}>
+          <div style={{ fontSize: 28, marginBottom: 8 }}>✅</div>
+          <div style={{ fontSize: 13, fontWeight: 800, color: "var(--accent)", marginBottom: 4 }}>
+            Squad Locked Onchain!
+          </div>
+          {txHash && (
+            <a
+              href={`https://xlayer-testnet.blockscout.com/tx/${txHash}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{ fontSize: 10, color: "var(--grey)", textDecoration: "underline", wordBreak: "break-all" }}
+            >
+              View tx: {txHash.slice(0, 20)}...
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* Error state */}
+      {lockStatus === "error" && (
+        <div style={{
+          ...GLASS,
+          padding: "12px 14px",
+          marginBottom: 8,
+          border: "1px solid rgba(255,71,87,0.3)",
+          background: "rgba(255,71,87,0.06)",
+        }}>
+          <div style={{ fontSize: 11, color: "var(--red)", fontWeight: 600 }}>
+            ⚠️ {lockMsg}
+          </div>
+          <button
+            onClick={() => { setLockStatus(null); setLockMsg(""); }}
+            style={{
+              marginTop: 8, fontSize: 10, color: "var(--grey)",
+              background: "none", border: "none", cursor: "pointer",
+              textDecoration: "underline",
+            }}
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
+      {/* Incomplete squad hint */}
+      {isSquadComplete && !squad.captain && (
+        <div style={{ textAlign: "center", fontSize: 11, color: "var(--grey)", marginTop: 4 }}>
+          Set a captain and vice-captain to lock your squad
+        </div>
       )}
 
       {/* Player Picker Modal */}
