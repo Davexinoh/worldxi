@@ -12,9 +12,8 @@ const POS_COLORS = {
 
 export default function SquadCard({ squad, findPlayerById, username, txHash, onClose }) {
   const canvasRef = useRef(null);
-
   const W = 600;
-  const H = 900;
+  const H = 920;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -26,14 +25,14 @@ export default function SquadCard({ squad, findPlayerById, username, txHash, onC
     ctx.fillRect(0, 0, W, H);
 
     // Pitch gradient
-    const pitchGrad = ctx.createRadialGradient(W / 2, 200, 0, W / 2, 200, 400);
-    pitchGrad.addColorStop(0, "rgba(0,120,50,0.35)");
+    const pitchGrad = ctx.createRadialGradient(W / 2, 300, 0, W / 2, 300, 450);
+    pitchGrad.addColorStop(0, "rgba(0,120,50,0.3)");
     pitchGrad.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = pitchGrad;
     ctx.fillRect(0, 0, W, H);
 
     // Pitch stripes
-    ctx.globalAlpha = 0.04;
+    ctx.globalAlpha = 0.035;
     for (let y = 0; y < H; y += 48) {
       ctx.fillStyle = "rgba(0,180,70,1)";
       ctx.fillRect(0, y, W, 24);
@@ -42,53 +41,70 @@ export default function SquadCard({ squad, findPlayerById, username, txHash, onC
 
     // Center circle
     ctx.beginPath();
-    ctx.arc(W / 2, 460, 70, 0, Math.PI * 2);
+    ctx.arc(W / 2, 480, 75, 0, Math.PI * 2);
     ctx.strokeStyle = "rgba(255,255,255,0.06)";
     ctx.lineWidth = 1;
     ctx.stroke();
 
     // Halfway line
     ctx.beginPath();
-    ctx.moveTo(40, 460); ctx.lineTo(W - 40, 460);
+    ctx.moveTo(40, 480); ctx.lineTo(W - 40, 480);
     ctx.strokeStyle = "rgba(255,255,255,0.05)";
+    ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Header — WorldXI branding
-    ctx.fillStyle = "#00E87A";
-    ctx.font = "bold 36px Arial";
+    // Top penalty box
+    ctx.strokeStyle = "rgba(255,255,255,0.05)";
+    ctx.strokeRect(W * 0.2, 110, W * 0.6, 60);
+
+    // Bottom penalty box
+    ctx.strokeRect(W * 0.2, H - 170, W * 0.6, 60);
+
+    // ── HEADER ──
+    // WorldXI title
     ctx.textAlign = "center";
-    ctx.fillText("W⚽RLDXI", W / 2, 52);
+    ctx.fillStyle = "#00E87A";
+    ctx.font = "bold 32px Arial";
+    ctx.fillText("W⚽RLDXI", W / 2, 44);
 
-    ctx.fillStyle = "rgba(255,255,255,0.3)";
-    ctx.font = "11px Arial";
-    ctx.fillText("ONCHAIN FANTASY FOOTBALL • WORLD CUP 2026", W / 2, 72);
-
-    // Manager name
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 18px Arial";
-    ctx.fillText(username?.toUpperCase() || "MANAGER", W / 2, 100);
+    ctx.fillStyle = "rgba(255,255,255,0.25)";
+    ctx.font = "10px Arial";
+    ctx.letterSpacing = "3px";
+    ctx.fillText("ONCHAIN FANTASY FOOTBALL  •  WORLD CUP 2026", W / 2, 62);
 
     // Divider
     ctx.beginPath();
-    ctx.moveTo(40, 114); ctx.lineTo(W - 40, 114);
+    ctx.moveTo(40, 74); ctx.lineTo(W - 40, 74);
     ctx.strokeStyle = "rgba(0,232,122,0.2)";
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Player layout — rows by position
+    // Manager name
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 16px Arial";
+    ctx.fillText((username || "MANAGER").toUpperCase(), W / 2, 96);
+
+    // ── PLAYER ROWS ──
     const gk = squad.selectedPlayerIds.filter(id => findPlayerById(id)?.pos === "GK");
     const def = squad.selectedPlayerIds.filter(id => findPlayerById(id)?.pos === "DEF");
     const mid = squad.selectedPlayerIds.filter(id => findPlayerById(id)?.pos === "MID");
     const fwd = squad.selectedPlayerIds.filter(id => findPlayerById(id)?.pos === "FWD");
 
-    const rows = [
-      { players: fwd.slice(0, 3), y: 155 },
-      { players: mid.slice(0, 5), y: 265 },
-      { players: def.slice(0, 5), y: 375 },
-      { players: gk.slice(0, 1), y: 480 },
+    const startingXI = [
+      ...fwd.slice(0, 3),
+      ...mid.slice(0, 5),
+      ...def.slice(0, 5),
+      ...gk.slice(0, 1),
     ];
 
-    function drawPlayer(id, x, y) {
+    const rows = [
+      { players: fwd.slice(0, 3), y: 168 },
+      { players: mid.slice(0, 5), y: 278 },
+      { players: def.slice(0, 5), y: 388 },
+      { players: gk.slice(0, 1), y: 495 },
+    ];
+
+    function drawPlayer(id, x, y, small = false) {
       const player = findPlayerById(id);
       if (!player) return;
       const flag = NATION_FLAGS[player.nation] || "🏳";
@@ -98,35 +114,45 @@ export default function SquadCard({ squad, findPlayerById, username, txHash, onC
       const isVice = squad.viceCaptain === id;
       const lastName = player.name.split(" ").pop();
 
-      const cardW = 68;
-      const cardH = 80;
+      const cardW = small ? 56 : 68;
+      const cardH = small ? 68 : 82;
       const cx = x - cardW / 2;
       const cy = y - cardH / 2;
 
-      // Card background
-      ctx.fillStyle = isCaptain ? "rgba(255,215,0,0.15)" : `${posColor}22`;
+      // Card bg
+      ctx.fillStyle = isCaptain
+        ? "rgba(255,215,0,0.14)"
+        : `${posColor}20`;
       ctx.beginPath();
-      ctx.roundRect(cx, cy, cardW, cardH, 8);
+      if (ctx.roundRect) {
+        ctx.roundRect(cx, cy, cardW, cardH, 8);
+      } else {
+        ctx.rect(cx, cy, cardW, cardH);
+      }
       ctx.fill();
 
       // Card border
       ctx.strokeStyle = isCaptain ? "#FFD700" : isVice ? "#00E87A" : posColor;
       ctx.lineWidth = isCaptain ? 2 : 1;
       ctx.beginPath();
-      ctx.roundRect(cx, cy, cardW, cardH, 8);
+      if (ctx.roundRect) {
+        ctx.roundRect(cx, cy, cardW, cardH, 8);
+      } else {
+        ctx.rect(cx, cy, cardW, cardH);
+      }
       ctx.stroke();
 
-      // Flag emoji
-      ctx.font = "22px Arial";
+      // Flag
+      ctx.font = `${small ? 18 : 22}px Arial`;
       ctx.textAlign = "center";
-      ctx.fillText(flag, x, cy + 28);
+      ctx.fillText(flag, x, cy + (small ? 22 : 26));
 
-      // Jersey number
+      // Jersey num
       ctx.fillStyle = posColor;
-      ctx.font = "bold 10px Arial";
-      ctx.fillText(`#${jerseyNum}`, x, cy + 44);
+      ctx.font = `bold ${small ? 9 : 10}px Arial`;
+      ctx.fillText(`#${jerseyNum}`, x, cy + (small ? 36 : 42));
 
-      // Captain / Vice badge
+      // Captain/Vice badge
       if (isCaptain || isVice) {
         ctx.fillStyle = isCaptain ? "#FFD700" : "#00E87A";
         ctx.beginPath();
@@ -134,24 +160,25 @@ export default function SquadCard({ squad, findPlayerById, username, txHash, onC
         ctx.fill();
         ctx.fillStyle = "#000";
         ctx.font = "bold 8px Arial";
+        ctx.textAlign = "center";
         ctx.fillText(isCaptain ? "C" : "V", cx + cardW - 8, cy + 11);
       }
 
-      // Player name
+      // Name
       ctx.fillStyle = "rgba(255,255,255,0.9)";
-      ctx.font = "bold 9px Arial";
+      ctx.font = `bold ${small ? 8 : 9}px Arial`;
       ctx.textAlign = "center";
       const shortName = lastName.length > 9 ? lastName.slice(0, 9) + "." : lastName;
-      ctx.fillText(shortName, x, cy + 58);
+      ctx.fillText(shortName, x, cy + (small ? 52 : 58));
 
-      // Pos tag
+      // Pos
       ctx.fillStyle = posColor;
-      ctx.font = "bold 8px Arial";
-      ctx.fillText(player.pos, x, cy + 70);
+      ctx.font = `bold ${small ? 7 : 8}px Arial`;
+      ctx.fillText(player.pos, x, cy + (small ? 63 : 71));
     }
 
     rows.forEach(({ players, y }) => {
-      if (players.length === 0) return;
+      if (!players.length) return;
       const spacing = (W - 80) / players.length;
       players.forEach((id, i) => {
         const x = 40 + spacing * i + spacing / 2;
@@ -159,84 +186,111 @@ export default function SquadCard({ squad, findPlayerById, username, txHash, onC
       });
     });
 
-    // Bench players
-    const bench = squad.selectedPlayerIds.filter(id => {
-      const p = findPlayerById(id);
-      const inRows = [
-        ...fwd.slice(0, 3), ...mid.slice(0, 5),
-        ...def.slice(0, 5), ...gk.slice(0, 1)
-      ];
-      return !inRows.includes(id);
-    });
+    // ── BENCH ──
+    const bench = squad.selectedPlayerIds.filter(id => !startingII.includes(id));
 
-    if (bench.length > 0) {
-      ctx.fillStyle = "rgba(255,255,255,0.06)";
+    // fix: use startingXI not startingII
+    const benchPlayers = squad.selectedPlayerIds.filter(id => !startingXI.includes(id));
+
+    if (benchPlayers.length > 0) {
+      // Bench bg
+      ctx.fillStyle = "rgba(255,255,255,0.03)";
       ctx.beginPath();
-      ctx.roundRect(20, 560, W - 40, 90, 8);
+      if (ctx.roundRect) {
+        ctx.roundRect(16, 558, W - 32, 100, 10);
+      } else {
+        ctx.rect(16, 558, W - 32, 100);
+      }
       ctx.fill();
 
-      ctx.fillStyle = "rgba(255,255,255,0.25)";
-      ctx.font = "bold 9px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText("BENCH", W / 2, 578);
+      ctx.strokeStyle = "rgba(255,255,255,0.06)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(16, 558, W - 32, 100, 10);
+      } else {
+        ctx.rect(16, 558, W - 32, 100);
+      }
+      ctx.stroke();
 
-      const bSpacing = (W - 80) / Math.max(bench.length, 4);
-      bench.forEach((id, i) => {
-        drawPlayer(id, 40 + bSpacing * i + bSpacing / 2, 620);
+      ctx.fillStyle = "rgba(255,255,255,0.2)";
+      ctx.font = "bold 8px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("BENCH", W / 2, 574);
+
+      const bSpacing = (W - 80) / Math.max(benchPlayers.length, 4);
+      benchPlayers.forEach((id, i) => {
+        drawPlayer(id, 40 + bSpacing * i + bSpacing / 2, 628, true);
       });
     }
 
-    // Footer
-    ctx.fillStyle = "rgba(0,232,122,0.15)";
-    ctx.fillRect(0, H - 80, W, 80);
+    // ── FOOTER ──
+    ctx.fillStyle = "rgba(0,232,122,0.1)";
+    ctx.fillRect(0, H - 82, W, 82);
+
+    ctx.beginPath();
+    ctx.moveTo(0, H - 82); ctx.lineTo(W, H - 82);
+    ctx.strokeStyle = "rgba(0,232,122,0.25)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
     ctx.fillStyle = "#00E87A";
     ctx.font = "bold 13px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("🔒 LOCKED ON X LAYER", W / 2, H - 52);
+    ctx.fillText("🔒 SQUAD LOCKED ON X LAYER", W / 2, H - 56);
 
     if (txHash && txHash !== "already-submitted") {
-      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      ctx.fillStyle = "rgba(255,255,255,0.3)";
       ctx.font = "9px Arial";
-      ctx.fillText(`TX: ${txHash.slice(0, 28)}...`, W / 2, H - 34);
+      ctx.fillText(`TX: ${txHash.slice(0, 32)}...`, W / 2, H - 38);
     }
 
-    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.fillStyle = "rgba(255,255,255,0.18)";
     ctx.font = "9px Arial";
-    ctx.fillText("worldxi.onrender.com  •  @PlayWorldXI", W / 2, H - 16);
+    ctx.fillText("worldxi.onrender.com  •  @PlayWorldXI  •  @XLayerOfficial", W / 2, H - 18);
 
   }, [squad, username, txHash]);
 
   function handleDownload() {
     const canvas = canvasRef.current;
     const link = document.createElement("a");
-    link.download = `worldxi-squad-${username || "manager"}.png`;
+    link.download = `worldxi-${username || "squad"}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
   }
 
   function handleShare() {
     const captain = findPlayerById(squad.captain);
-    const text = `⚽ I just locked my World Cup 2026 fantasy squad onchain!\n\nCaptain: ${captain?.name || "TBA"} ⭐\n\n🔒 Verified on X Layer\n🎮 worldxi.onrender.com\n\n@PlayWorldXI`;
+    const captainName = captain?.name || "TBA";
+    const text = `⚽ Just locked my World Cup 2026 fantasy squad onchain!\n\nCaptain: ${captainName} ⭐\n🔒 Verified on X Layer\n🎮 worldxi.onrender.com\n\n@PlayWorldXI @XLayerOfficial`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`);
   }
 
   return (
     <div style={{
-      position: "fixed", inset: 0, zIndex: 999,
-      background: "rgba(0,0,0,0.92)",
+      position: "fixed", inset: 0, zIndex: 1000,
+      background: "rgba(0,0,0,0.94)",
       display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center",
-      padding: 16, overflowY: "auto",
+      alignItems: "center", justifyContent: "flex-start",
+      padding: "16px 16px 32px", overflowY: "auto",
     }}>
-      <div style={{ width: "100%", maxWidth: 420 }}>
+      <div style={{ width: "100%", maxWidth: 440 }}>
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: "#00E87A" }}>Your Squad Card</div>
+        <div style={{
+          display: "flex", justifyContent: "space-between",
+          alignItems: "center", marginBottom: 12,
+        }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: "#00E87A" }}>Your Squad Card</div>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
+              Download or share on X
+            </div>
+          </div>
           <button onClick={onClose} style={{
-            background: "rgba(255,255,255,0.08)", border: "none",
+            background: "rgba(255,255,255,0.07)",
+            border: "1px solid rgba(255,255,255,0.1)",
             color: "#fff", fontSize: 18, cursor: "pointer",
-            width: 32, height: 32, borderRadius: 8,
+            width: 36, height: 36, borderRadius: 8,
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>✕</button>
         </div>
@@ -248,19 +302,21 @@ export default function SquadCard({ squad, findPlayerById, username, txHash, onC
           height={H}
           style={{
             width: "100%", borderRadius: 12,
-            border: "1px solid rgba(0,232,122,0.2)",
+            border: "1px solid rgba(0,232,122,0.15)",
+            display: "block",
           }}
         />
 
-        {/* Action buttons */}
+        {/* Buttons */}
         <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
           <button
             onClick={handleDownload}
             style={{
-              flex: 1, padding: "13px", borderRadius: 10,
+              flex: 1, padding: "14px", borderRadius: 10,
               background: "linear-gradient(135deg, #00E87A, #00c96a)",
               color: "#000", border: "none", fontSize: 12, fontWeight: 800,
               textTransform: "uppercase", letterSpacing: 1, cursor: "pointer",
+              boxShadow: "0 4px 20px rgba(0,232,122,0.25)",
             }}
           >
             ⬇️ Download PNG
@@ -268,15 +324,19 @@ export default function SquadCard({ squad, findPlayerById, username, txHash, onC
           <button
             onClick={handleShare}
             style={{
-              flex: 1, padding: "13px", borderRadius: 10,
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.12)",
+              flex: 1, padding: "14px", borderRadius: 10,
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.1)",
               color: "#fff", fontSize: 12, fontWeight: 800,
               textTransform: "uppercase", letterSpacing: 1, cursor: "pointer",
             }}
           >
             🐦 Share on X
           </button>
+        </div>
+
+        <div style={{ marginTop: 10, textAlign: "center", fontSize: 9, color: "rgba(255,255,255,0.15)" }}>
+          Card includes @PlayWorldXI and @XLayerOfficial tags
         </div>
       </div>
     </div>
