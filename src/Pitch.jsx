@@ -1,5 +1,18 @@
 import { useState } from "react";
 
+const NATION_FLAGS = {
+  France: "🇫🇷", England: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", Brazil: "🇧🇷", Germany: "🇩🇪",
+  Portugal: "🇵🇹", Spain: "🇪🇸", Argentina: "🇦🇷", Belgium: "🇧🇪",
+  Netherlands: "🇳🇱", Croatia: "🇭🇷",
+};
+
+const POS_COLORS = {
+  GK: { bg: "rgba(255,193,7,0.25)", border: "#FFC107", text: "#FFC107" },
+  DEF: { bg: "rgba(33,150,243,0.25)", border: "#2196F3", text: "#2196F3" },
+  MID: { bg: "rgba(0,232,122,0.25)", border: "#00E87A", text: "#00E87A" },
+  FWD: { bg: "rgba(255,71,87,0.25)", border: "#FF4757", text: "#FF4757" },
+};
+
 export default function Pitch({
   selectedPlayerIds,
   formation,
@@ -11,26 +24,19 @@ export default function Pitch({
 }) {
   const [draggedPlayerId, setDraggedPlayerId] = useState(null);
 
-  // Organize players by position in formation
-  const gk = selectedPlayerIds.filter(id => {
-    const p = findPlayerById(id);
-    return p && p.pos === "GK";
-  });
+  const gk = selectedPlayerIds.filter(id => findPlayerById(id)?.pos === "GK");
+  const def = selectedPlayerIds.filter(id => findPlayerById(id)?.pos === "DEF");
+  const mid = selectedPlayerIds.filter(id => findPlayerById(id)?.pos === "MID");
+  const fwd = selectedPlayerIds.filter(id => findPlayerById(id)?.pos === "FWD");
 
-  const def = selectedPlayerIds.filter(id => {
-    const p = findPlayerById(id);
-    return p && p.pos === "DEF";
-  });
-
-  const mid = selectedPlayerIds.filter(id => {
-    const p = findPlayerById(id);
-    return p && p.pos === "MID";
-  });
-
-  const fwd = selectedPlayerIds.filter(id => {
-    const p = findPlayerById(id);
-    return p && p.pos === "FWD";
-  });
+  // Bench = players beyond starting formation slots
+  const starters = [
+    ...gk.slice(0, formation.gk),
+    ...def.slice(0, formation.def),
+    ...mid.slice(0, formation.mid),
+    ...fwd.slice(0, formation.fwd),
+  ];
+  const bench = selectedPlayerIds.filter(id => !starters.includes(id));
 
   function handleDragStart(e, playerId) {
     setDraggedPlayerId(playerId);
@@ -48,12 +54,17 @@ export default function Pitch({
     setDraggedPlayerId(null);
   }
 
-  function PlayerSlot({ playerId, isDragging }) {
+  function PlayerSlot({ playerId }) {
     const player = findPlayerById(playerId);
     if (!player) return null;
 
     const isCaptain = captain === playerId;
     const isViceCaptain = viceCaptain === playerId;
+    const isDragging = draggedPlayerId === playerId;
+    const posStyle = POS_COLORS[player.pos] || POS_COLORS.MID;
+    const flag = NATION_FLAGS[player.nation] || "🏳️";
+    const jerseyNum = player.id.split("_")[1]?.replace(/^0+/, "") || "?";
+    const lastName = player.name.split(" ").pop();
 
     return (
       <div
@@ -62,164 +73,256 @@ export default function Pitch({
         onDragOver={handleDragOver}
         onDrop={(e) => handleDropOnPlayer(e, playerId)}
         style={{
-          padding: "8px",
-          borderRadius: "4px",
-          background: isDragging ? "rgba(0,232,122,0.2)" : "rgba(255,255,255,0.05)",
-          border: isCaptain ? "2px solid var(--accent)" : isViceCaptain ? "2px solid rgba(0,232,122,0.5)" : "1px solid var(--grey2)",
-          cursor: "grab",
-          textAlign: "center",
-          minHeight: "60px",
+          position: "relative",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
           alignItems: "center",
-          position: "relative",
+          gap: 3,
+          cursor: "grab",
+          opacity: isDragging ? 0.5 : 1,
+          transition: "opacity 0.15s",
         }}
       >
-        <img
-          src={player.photo}
-          alt={player.name}
-          style={{
-            width: "32px",
-            height: "32px",
-            borderRadius: "50%",
-            objectFit: "cover",
-            marginBottom: "4px",
-          }}
-        />
-        <div style={{ fontSize: "9px", fontWeight: 600, color: "var(--text)", lineHeight: 1.2 }}>
-          {player.name.split(" ").pop()}
+        {/* Jersey card */}
+        <div style={{
+          width: 44, height: 44, borderRadius: 8,
+          background: isCaptain
+            ? "rgba(255,215,0,0.2)"
+            : isViceCaptain
+            ? "rgba(0,232,122,0.15)"
+            : posStyle.bg,
+          border: `2px solid ${isCaptain ? "#FFD700" : isViceCaptain ? "#00E87A" : posStyle.border}`,
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          gap: 1, position: "relative",
+          boxShadow: isCaptain
+            ? "0 0 12px rgba(255,215,0,0.4)"
+            : isViceCaptain
+            ? "0 0 8px rgba(0,232,122,0.3)"
+            : "none",
+        }}>
+          <span style={{ fontSize: 18, lineHeight: 1 }}>{flag}</span>
+          <span style={{ fontSize: 8, fontWeight: 800, color: posStyle.text, lineHeight: 1 }}>
+            #{jerseyNum}
+          </span>
+
+          {/* Captain badge */}
+          {isCaptain && (
+            <div style={{
+              position: "absolute", top: -6, right: -6,
+              width: 16, height: 16, borderRadius: "50%",
+              background: "#FFD700", color: "#000",
+              fontSize: 9, fontWeight: 900,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>C</div>
+          )}
+
+          {/* Vice captain badge */}
+          {isViceCaptain && (
+            <div style={{
+              position: "absolute", top: -6, right: -6,
+              width: 16, height: 16, borderRadius: "50%",
+              background: "#00E87A", color: "#000",
+              fontSize: 9, fontWeight: 900,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>V</div>
+          )}
+
+          {/* Remove button */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onRemove(playerId); }}
+            style={{
+              position: "absolute", bottom: -6, right: -6,
+              width: 14, height: 14, borderRadius: "50%",
+              background: "var(--red)", border: "none",
+              color: "#fff", fontSize: 10, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: 0, lineHeight: 1,
+            }}
+          >×</button>
         </div>
-        <div style={{ fontSize: "8px", color: "var(--grey)" }}>#{player.id}</div>
 
-        {/* Captain Badge */}
-        {isCaptain && (
-          <div style={{
-            position: "absolute",
-            top: "4px",
-            right: "4px",
-            width: "16px",
-            height: "16px",
-            borderRadius: "50%",
-            background: "var(--accent)",
-            color: "#000",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "10px",
-            fontWeight: 700,
-          }}>
-            C
-          </div>
-        )}
+        {/* Player name */}
+        <div style={{
+          fontSize: 8, fontWeight: 700, color: "#fff",
+          textAlign: "center", lineHeight: 1.2,
+          maxWidth: 48, overflow: "hidden",
+          textOverflow: "ellipsis", whiteSpace: "nowrap",
+          textShadow: "0 1px 3px rgba(0,0,0,0.8)",
+        }}>
+          {lastName}
+        </div>
 
-        {/* Vice-Captain Badge */}
-        {isViceCaptain && (
-          <div style={{
-            position: "absolute",
-            top: "4px",
-            right: "4px",
-            width: "16px",
-            height: "16px",
-            borderRadius: "50%",
-            background: "rgba(0,232,122,0.5)",
-            color: "#000",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "10px",
-            fontWeight: 700,
-          }}>
-            V
-          </div>
-        )}
-
-        {/* Remove Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove(playerId);
-          }}
-          style={{
-            position: "absolute",
-            bottom: "2px",
-            right: "2px",
-            width: "14px",
-            height: "14px",
-            borderRadius: "50%",
-            background: "var(--red)",
-            border: "none",
-            color: "#fff",
-            fontSize: "10px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 0,
-          }}
-        >
-          ×
-        </button>
+        {/* Position tag */}
+        <div style={{
+          fontSize: 7, fontWeight: 800, color: posStyle.text,
+          letterSpacing: 0.5,
+        }}>
+          {player.pos}
+        </div>
       </div>
     );
   }
 
+  function BenchSlot({ playerId }) {
+    const player = findPlayerById(playerId);
+    if (!player) return null;
+    const posStyle = POS_COLORS[player.pos] || POS_COLORS.MID;
+    const flag = NATION_FLAGS[player.nation] || "🏳️";
+    const jerseyNum = player.id.split("_")[1]?.replace(/^0+/, "") || "?";
+    const lastName = player.name.split(" ").pop();
+
+    return (
+      <div
+        draggable
+        onDragStart={(e) => handleDragStart(e, playerId)}
+        onDragOver={handleDragOver}
+        onDrop={(e) => handleDropOnPlayer(e, playerId)}
+        style={{
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+          cursor: "grab", opacity: draggedPlayerId === playerId ? 0.5 : 1,
+        }}
+      >
+        <div style={{
+          width: 36, height: 36, borderRadius: 6,
+          background: posStyle.bg,
+          border: `1px solid ${posStyle.border}`,
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          gap: 1, position: "relative", opacity: 0.7,
+        }}>
+          <span style={{ fontSize: 14, lineHeight: 1 }}>{flag}</span>
+          <span style={{ fontSize: 7, fontWeight: 800, color: posStyle.text }}># {jerseyNum}</span>
+          <button
+            onClick={(e) => { e.stopPropagation(); onRemove(playerId); }}
+            style={{
+              position: "absolute", top: -5, right: -5,
+              width: 12, height: 12, borderRadius: "50%",
+              background: "var(--red)", border: "none",
+              color: "#fff", fontSize: 9, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: 0,
+            }}
+          >×</button>
+        </div>
+        <div style={{ fontSize: 7, color: "rgba(255,255,255,0.6)", textAlign: "center", maxWidth: 40, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {lastName}
+        </div>
+      </div>
+    );
+  }
+
+  const startingGK = gk.slice(0, formation.gk);
+  const startingDEF = def.slice(0, formation.def);
+  const startingMID = mid.slice(0, formation.mid);
+  const startingFWD = fwd.slice(0, formation.fwd);
+
   return (
     <div style={{
-      background: "linear-gradient(to bottom, #1a4d2e 0%, #0f3d23 100%)",
-      borderRadius: "8px",
-      padding: "20px",
-      marginBottom: "20px",
-      border: "2px solid rgba(0,232,122,0.2)",
+      background: "linear-gradient(to bottom, #1a5c35 0%, #0f3d23 60%, #0a2d1a 100%)",
+      borderRadius: 12,
+      overflow: "hidden",
+      border: "1px solid rgba(0,232,122,0.15)",
     }}>
-      {/* Formation Title */}
-      <div style={{
-        fontSize: "11px",
-        color: "var(--grey2)",
-        textAlign: "center",
-        marginBottom: "16px",
-        textTransform: "uppercase",
-        letterSpacing: 1,
-        fontWeight: 600,
-      }}>
-        {formation.name} Formation
+      {/* Pitch markings */}
+      <div style={{ position: "relative" }}>
+        {/* Top penalty box */}
+        <div style={{
+          position: "absolute", top: 0, left: "20%", right: "20%",
+          height: 40, border: "1px solid rgba(255,255,255,0.12)",
+          borderTop: "none", borderRadius: "0 0 4px 4px",
+        }} />
+        {/* Center circle */}
+        <div style={{
+          position: "absolute", top: "46%", left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: 70, height: 70, borderRadius: "50%",
+          border: "1px solid rgba(255,255,255,0.1)",
+          pointerEvents: "none",
+        }} />
+
+        {/* Formation label */}
+        <div style={{
+          textAlign: "center", paddingTop: 10, paddingBottom: 4,
+          fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.3)",
+          textTransform: "uppercase", letterSpacing: 2, position: "relative", zIndex: 1,
+        }}>
+          {formation.name}
+        </div>
+
+        {/* Pitch rows */}
+        <div style={{ padding: "8px 12px 4px", position: "relative", zIndex: 1 }}>
+
+          {/* Forwards */}
+          {startingFWD.length > 0 && (
+            <div style={{
+              display: "flex", justifyContent: "space-evenly",
+              alignItems: "center", marginBottom: 12,
+            }}>
+              {startingFWD.map(id => <PlayerSlot key={id} playerId={id} />)}
+            </div>
+          )}
+
+          {/* Midfielders */}
+          {startingMID.length > 0 && (
+            <div style={{
+              display: "flex", justifyContent: "space-evenly",
+              alignItems: "center", marginBottom: 12,
+            }}>
+              {startingMID.map(id => <PlayerSlot key={id} playerId={id} />)}
+            </div>
+          )}
+
+          {/* Defenders */}
+          {startingDEF.length > 0 && (
+            <div style={{
+              display: "flex", justifyContent: "space-evenly",
+              alignItems: "center", marginBottom: 12,
+            }}>
+              {startingDEF.map(id => <PlayerSlot key={id} playerId={id} />)}
+            </div>
+          )}
+
+          {/* Goalkeeper */}
+          {startingGK.length > 0 && (
+            <div style={{
+              display: "flex", justifyContent: "center",
+              alignItems: "center", marginBottom: 8,
+            }}>
+              {startingGK.map(id => <PlayerSlot key={id} playerId={id} />)}
+            </div>
+          )}
+        </div>
+
+        {/* Bottom penalty box */}
+        <div style={{
+          margin: "0 20%", height: 12,
+          borderLeft: "1px solid rgba(255,255,255,0.12)",
+          borderRight: "1px solid rgba(255,255,255,0.12)",
+          borderBottom: "1px solid rgba(255,255,255,0.12)",
+          borderRadius: "0 0 4px 4px",
+        }} />
       </div>
 
-      {/* Goalkeeper */}
-      <div style={{ marginBottom: "20px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(1, 1fr)", gap: "8px" }}>
-          {gk.map(id => (
-            <PlayerSlot key={id} playerId={id} isDragging={draggedPlayerId === id} />
-          ))}
+      {/* Bench */}
+      {bench.length > 0 && (
+        <div style={{
+          borderTop: "1px dashed rgba(255,255,255,0.1)",
+          padding: "10px 12px",
+          background: "rgba(0,0,0,0.2)",
+        }}>
+          <div style={{
+            fontSize: 8, color: "rgba(255,255,255,0.3)",
+            textTransform: "uppercase", letterSpacing: 2,
+            marginBottom: 8, textAlign: "center", fontWeight: 700,
+          }}>
+            Bench ({bench.length})
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-evenly", flexWrap: "wrap", gap: 8 }}>
+            {bench.map(id => <BenchSlot key={id} playerId={id} />)}
+          </div>
         </div>
-      </div>
-
-      {/* Defenders */}
-      <div style={{ marginBottom: "20px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.max(def.length, formation.def)}, 1fr)`, gap: "8px" }}>
-          {def.map(id => (
-            <PlayerSlot key={id} playerId={id} isDragging={draggedPlayerId === id} />
-          ))}
-        </div>
-      </div>
-
-      {/* Midfielders */}
-      <div style={{ marginBottom: "20px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.max(mid.length, formation.mid)}, 1fr)`, gap: "8px" }}>
-          {mid.map(id => (
-            <PlayerSlot key={id} playerId={id} isDragging={draggedPlayerId === id} />
-          ))}
-        </div>
-      </div>
-
-      {/* Forwards */}
-      <div>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.max(fwd.length, formation.fwd)}, 1fr)`, gap: "8px" }}>
-          {fwd.map(id => (
-            <PlayerSlot key={id} playerId={id} isDragging={draggedPlayerId === id} />
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
