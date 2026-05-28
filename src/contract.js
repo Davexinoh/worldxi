@@ -1,6 +1,10 @@
-// WorldXI Contract — X Layer Testnet
+// WorldXI — Onchain Fantasy Football
+// Network: X Layer Testnet (Chain ID: 195)
+// Contract: 0x7D96E5e3D8a188ce5472785BD442cdE7e12F3dF4
+// Explorer: https://www.okx.com/explorer/xlayer-test/address/0x7D96E5e3D8a188ce5472785BD442cdE7e12F3dF4
+
 export const CONTRACT_ADDRESS = "0x7D96E5e3D8a188ce5472785BD442cdE7e12F3dF4";
-export const CHAIN_ID = 1952;
+export const CHAIN_ID = 195;
 export const RPC_URL = "https://testrpc.xlayer.tech";
 
 export const ABI = [
