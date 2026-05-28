@@ -4,6 +4,7 @@ import PlayerPickerModal from "./PlayerPickerModal.jsx";
 import Pitch from "./Pitch.jsx";
 import CaptainSelector from "./CaptainSelector.jsx";
 import { submitSquadOnchain } from "./wallet.js";
+import SquadCard from "./SquadCard.jsx";
 
 const FORMATIONS = [
   { name: "4-3-3", gk: 1, def: 4, mid: 3, fwd: 3 },
@@ -32,8 +33,9 @@ const GLASS_GREEN = {
   borderRadius: 12,
 };
 
-export default function SquadBuilder({ squad, setSquad, onSquadLocked, squadLocked, txHash: savedTxHash }) {
+export default function SquadBuilder({ squad, setSquad, onSquadLocked, squadLocked, txHash: savedTxHash, username }) {
   const [showPickerModal, setShowPickerModal] = useState(false);
+  const [showSquadCard, setShowSquadCard] = useState(false);
   const [formation, setFormation] = useState(FORMATIONS[0]);
   const [locking, setLocking] = useState(false);
   const [lockStatus, setLockStatus] = useState(squadLocked ? "success" : null);
@@ -113,11 +115,7 @@ export default function SquadBuilder({ squad, setSquad, onSquadLocked, squadLock
         : result.txHash;
       setLockedTxHash(finalTxHash);
       setLockStatus("success");
-      setLockMsg(
-        result.txHash === "already-submitted"
-          ? "Squad already locked onchain!"
-          : "Squad locked onchain!"
-      );
+      setLockMsg(result.txHash === "already-submitted" ? "Squad already locked onchain!" : "Squad locked onchain!");
       if (onSquadLocked) onSquadLocked(finalTxHash);
     } catch (err) {
       setLockStatus("error");
@@ -151,7 +149,7 @@ export default function SquadBuilder({ squad, setSquad, onSquadLocked, squadLock
         </div>
         {isLocked && (
           <div style={{ fontSize: 11, color: "var(--accent)", marginTop: 4, fontWeight: 700 }}>
-            🔒 Squad locked onchain
+            🔒 Squad locked on X Layer
           </div>
         )}
       </div>
@@ -222,7 +220,7 @@ export default function SquadBuilder({ squad, setSquad, onSquadLocked, squadLock
         />
       </div>
 
-      {/* Add Players Button — hidden when locked */}
+      {/* Add Players Button */}
       {!isSquadComplete && !isLocked && (
         <button
           onClick={() => setShowPickerModal(true)}
@@ -238,7 +236,7 @@ export default function SquadBuilder({ squad, setSquad, onSquadLocked, squadLock
         </button>
       )}
 
-      {/* Captain Selector — hidden when locked */}
+      {/* Captain Selector */}
       {isSquadComplete && !isLocked && (
         <div style={{ ...GLASS, padding: "14px", marginBottom: 12 }}>
           <CaptainSelector
@@ -296,24 +294,40 @@ export default function SquadBuilder({ squad, setSquad, onSquadLocked, squadLock
           <div style={{ fontSize: 14, fontWeight: 800, color: "var(--accent)", marginBottom: 4 }}>
             Squad Locked on X Layer!
           </div>
-          <div style={{ fontSize: 11, color: "var(--grey)", marginBottom: 12, lineHeight: 1.6 }}>
+          <div style={{ fontSize: 11, color: "var(--grey)", marginBottom: 16, lineHeight: 1.6 }}>
             Your squad is permanently recorded onchain.<br />Good luck, manager.
           </div>
-          {lockedTxHash && lockedTxHash !== "already-submitted" && (
-            <a
-              href={`https://xlayer-testnet.blockscout.com/tx/${lockedTxHash}`}
-              target="_blank"
-              rel="noreferrer"
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+            <button
+              onClick={() => setShowSquadCard(true)}
               style={{
-                display: "inline-block", padding: "8px 16px", borderRadius: 8,
-                background: "rgba(0,232,122,0.1)", border: "1px solid rgba(0,232,122,0.2)",
-                fontSize: 10, color: "var(--accent)", textDecoration: "none",
-                wordBreak: "break-all",
+                padding: "11px 18px", borderRadius: 8,
+                background: "linear-gradient(135deg, #00E87A, #00c96a)",
+                color: "#000", border: "none", fontSize: 11, fontWeight: 800,
+                textTransform: "uppercase", letterSpacing: 1, cursor: "pointer",
+                boxShadow: "0 4px 16px rgba(0,232,122,0.3)",
               }}
             >
-              🔗 View on Blockscout
-            </a>
-          )}
+              🖼️ Squad Card
+            </button>
+            {lockedTxHash && lockedTxHash !== "already-submitted" && (
+              <a
+                href={`https://www.okx.com/explorer/xlayer-test/tx/${lockedTxHash}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: "inline-flex", alignItems: "center",
+                  padding: "11px 18px", borderRadius: 8,
+                  background: "rgba(0,232,122,0.08)",
+                  border: "1px solid rgba(0,232,122,0.2)",
+                  fontSize: 11, color: "var(--accent)",
+                  textDecoration: "none", fontWeight: 700,
+                }}
+              >
+                🔗 Explorer
+              </a>
+            )}
+          </div>
         </div>
       )}
 
@@ -356,6 +370,17 @@ export default function SquadBuilder({ squad, setSquad, onSquadLocked, squadLock
           budgetRemaining={budgetRemaining}
           formation={formation}
           findPlayerById={findPlayerById}
+        />
+      )}
+
+      {/* Squad Card Modal */}
+      {showSquadCard && (
+        <SquadCard
+          squad={squad}
+          findPlayerById={findPlayerById}
+          username={username}
+          txHash={lockedTxHash}
+          onClose={() => setShowSquadCard(false)}
         />
       )}
     </div>
