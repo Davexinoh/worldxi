@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, Component, lazy, Suspense } from "react";
-import { connectWallet, getExistingUsername } from "./wallet.js";
+import { connectWallet, getExistingUsername, getReadContract } from "./wallet.js";
 
 const SquadBuilder = lazy(() => import("./SquadBuilder.jsx"));
 
@@ -352,18 +352,59 @@ function SetUsernameScreen({ wallet, onDone }) {
 }
 
 function HomeScreen({ username, squadCount, squadLocked, txHash }) {
+  const [managerCount, setManagerCount] = useState(null);
+  const [countdown, setCountdown] = useState("");
+
+  useEffect(() => {
+    getReadContract().getManagerCount()
+      .then(count => setManagerCount(count.toString()))
+      .catch(() => setManagerCount("—"));
+  }, []);
+
+  useEffect(() => {
+    const target = new Date("2026-06-11T00:00:00Z");
+    const tick = () => {
+      const diff = target - new Date();
+      if (diff <= 0) { setCountdown("LIVE NOW"); return; }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      setCountdown(`${d}d ${h}h ${m}m`);
+    };
+    tick();
+    const t = setInterval(tick, 60000);
+    return () => clearInterval(t);
+  }, []);
+
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", position: "relative", overflow: "hidden" }}>
       <PitchBg />
       <div style={{ position: "relative", zIndex: 1, padding: "20px 16px" }}>
+
+        {/* Countdown */}
         <div style={{
-          ...glassGreen, padding: "22px 20px", marginBottom: 16, textAlign: "center",
-          boxShadow: "0 4px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
-          animation: "fadeUp 0.4s ease",
+          textAlign: "center", padding: "14px 16px", borderRadius: 12, marginBottom: 16,
+          background: "rgba(255,193,7,0.06)", border: "1px solid rgba(255,193,7,0.2)",
         }}>
-          <div style={{ fontSize: 36, marginBottom: 10 }}>🏆</div>
+          <div style={{ fontSize: 9, color: "rgba(255,193,7,0.6)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 4 }}>
+            World Cup Kickoff
+          </div>
+          <div style={{ fontSize: 30, fontWeight: 900, color: "#FFC107", letterSpacing: 2, lineHeight: 1 }}>
+            {countdown || "..."}
+          </div>
+          <div style={{ fontSize: 9, color: "rgba(255,255,255,0.2)", marginTop: 4 }}>
+            June 11, 2026 • Lock your squad before kickoff
+          </div>
+        </div>
+
+        {/* Manager card */}
+        <div style={{
+          ...glassGreen, padding: "20px 16px", marginBottom: 16, textAlign: "center",
+          boxShadow: "0 4px 32px rgba(0,0,0,0.3)",
+        }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>🏆</div>
           <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 6 }}>Manager</div>
-          <div style={{ fontSize: 24, fontWeight: 900, color: "var(--accent)", marginBottom: 4, textShadow: "0 0 20px rgba(0,232,122,0.4)" }}>
+          <div style={{ fontSize: 22, fontWeight: 900, color: "var(--accent)", marginBottom: 4, textShadow: "0 0 20px rgba(0,232,122,0.4)" }}>
             {username}
           </div>
           <div style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", letterSpacing: 2, textTransform: "uppercase" }}>
@@ -376,30 +417,32 @@ function HomeScreen({ username, squadCount, squadLocked, txHash }) {
           )}
         </div>
 
+        {/* Stats row */}
         <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
           {[
             { label: "Points", value: "0", icon: "⭐", color: "#FFD700" },
-            { label: "Rank", value: "—", icon: "📊", color: "var(--accent)" },
             { label: "Squad", value: `${squadCount}/15`, icon: "👥", color: squadCount === 15 ? "var(--accent)" : "var(--grey)" },
+            { label: "Managers", value: managerCount || "...", icon: "🌍", color: "var(--accent)" },
           ].map(stat => (
             <div key={stat.label} style={{
               flex: 1, padding: "14px 8px", borderRadius: 12, textAlign: "center",
               ...glass, boxShadow: "0 2px 16px rgba(0,0,0,0.2)",
             }}>
-              <div style={{ fontSize: 20, marginBottom: 6 }}>{stat.icon}</div>
-              <div style={{ fontSize: 17, fontWeight: 900, color: stat.color, marginBottom: 3 }}>{stat.value}</div>
+              <div style={{ fontSize: 18, marginBottom: 6 }}>{stat.icon}</div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: stat.color, marginBottom: 3 }}>{stat.value}</div>
               <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: 1 }}>{stat.label}</div>
             </div>
           ))}
         </div>
 
+        {/* TX link */}
         {squadLocked && txHash && txHash !== "already-submitted" && (
           <div style={{ ...glassGreen, padding: "12px 16px", marginBottom: 12, display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ fontSize: 20 }}>🔗</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)", marginBottom: 2 }}>Squad TX on X Layer</div>
               <a
-                href={`https://xlayer-testnet.blockscout.com/tx/${txHash}`}
+                href={`https://www.okx.com/explorer/xlayer-test/tx/${txHash}`}
                 target="_blank"
                 rel="noreferrer"
                 style={{ fontSize: 10, color: "var(--grey)", textDecoration: "underline", wordBreak: "break-all" }}
@@ -410,17 +453,10 @@ function HomeScreen({ username, squadCount, squadLocked, txHash }) {
           </div>
         )}
 
-        <div style={{ ...glass, padding: "12px 16px", marginBottom: 12, display: "flex", alignItems: "center", gap: 12, borderColor: "rgba(255,193,7,0.2)", background: "rgba(255,193,7,0.04)" }}>
-          <div style={{ fontSize: 22 }}>⏰</div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#FFC107", marginBottom: 2 }}>Deadline: June 11, 2026</div>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", lineHeight: 1.5 }}>Lock your squad before World Cup kickoff</div>
-          </div>
-        </div>
-
+        {/* Info cards */}
         {[
           { icon: "⚽", title: "How to Play", body: "Pick 15 players within 100 OKB budget. Max 3 from any nation. Set captain (2× points) and vice-captain.", color: "rgba(0,232,122,0.06)" },
-          { icon: "🏅", title: "Scoring", body: "Goals, assists, clean sheets all earn points. Country bonus: +10% if 3+ players from same nation in your XI.", color: "rgba(255,193,7,0.05)" },
+          { icon: "🏅", title: "Scoring", body: "Goals, assists, clean sheets earn points. Country bonus: +10% if 3+ players from same nation in your XI.", color: "rgba(255,193,7,0.05)" },
           { icon: "🔗", title: "Powered by X Layer", body: "Your squad is submitted onchain to X Layer — transparent, verifiable, and permanent.", color: "rgba(100,100,255,0.05)" },
         ].map(card => (
           <div key={card.title} style={{
@@ -430,7 +466,7 @@ function HomeScreen({ username, squadCount, squadLocked, txHash }) {
           }}>
             <div style={{ fontSize: 22, flexShrink: 0 }}>{card.icon}</div>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 800, color: "var(--text)", marginBottom: 4, letterSpacing: 0.3 }}>{card.title}</div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "var(--text)", marginBottom: 4 }}>{card.title}</div>
               <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", lineHeight: 1.7 }}>{card.body}</div>
             </div>
           </div>
@@ -449,8 +485,10 @@ function TransfersScreen() {
         <div style={{ fontSize: 20, fontWeight: 800, color: "var(--text)", marginBottom: 24 }}>Transfers</div>
         <div style={{ ...glass, padding: "32px 20px", textAlign: "center" }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🔄</div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>Coming Soon</div>
-          <div style={{ fontSize: 11, color: "var(--grey)", lineHeight: 1.7 }}>Swap players between matchdays.<br />Strategy starts here.</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>Opens June 11</div>
+          <div style={{ fontSize: 11, color: "var(--grey)", lineHeight: 1.7 }}>
+            Swap players between matchdays.<br />Strategy starts when the tournament begins.
+          </div>
         </div>
       </div>
     </div>
@@ -466,8 +504,10 @@ function LeaderboardScreen() {
         <div style={{ fontSize: 20, fontWeight: 800, color: "var(--text)", marginBottom: 24 }}>Leaderboard</div>
         <div style={{ ...glass, padding: "32px 20px", textAlign: "center" }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🏆</div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>Coming Soon</div>
-          <div style={{ fontSize: 11, color: "var(--grey)", lineHeight: 1.7 }}>Global rankings go live<br />when World Cup kicks off.</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 8 }}>Opens June 11</div>
+          <div style={{ fontSize: 11, color: "var(--grey)", lineHeight: 1.7 }}>
+            Global rankings go live when<br />World Cup kicks off.
+          </div>
         </div>
       </div>
     </div>
@@ -504,19 +544,16 @@ function WorldXIAppInner() {
   const audioRef = useRef(null);
   const musicStarted = useRef(false);
 
-  // Auto-save squad on every change
   useEffect(() => {
     if (!wallet) return;
     localStorage.setItem(`worldxi_squad_${wallet}`, JSON.stringify(squad));
   }, [squad, wallet]);
 
-  // Auto-save active tab
   useEffect(() => {
     if (!wallet) return;
     localStorage.setItem(`worldxi_tab_${wallet}`, activeTab);
   }, [activeTab, wallet]);
 
-  // Music
   useEffect(() => {
     if (!musicStarted.current && audioRef.current) {
       musicStarted.current = true;
@@ -545,7 +582,6 @@ function WorldXIAppInner() {
     setSquadLocked(data.squadLocked);
     setLockedTxHash(data.txHash);
     localStorage.setItem("worldxi_last_wallet", address);
-
     if (!data.username) {
       try {
         const onchainName = await getExistingUsername(address);
@@ -574,7 +610,6 @@ function WorldXIAppInner() {
     }
   };
 
-  // Logout — session only, all data stays
   const handleLogout = () => {
     if (wallet) {
       localStorage.setItem(`worldxi_squad_${wallet}`, JSON.stringify(squad));
@@ -583,7 +618,6 @@ function WorldXIAppInner() {
     setWallet(null);
     setUsername(null);
     setShowLogout(false);
-    // Keep worldxi_last_wallet so reconnecting restores instantly
   };
 
   if (!wallet) return <ConnectScreen onConnect={handleConnect} />;
@@ -603,6 +637,7 @@ function WorldXIAppInner() {
             onSquadLocked={handleSquadLocked}
             squadLocked={squadLocked}
             txHash={lockedTxHash}
+            username={username}
           />
         </Suspense>
       );
@@ -718,7 +753,6 @@ function WorldXIAppInner() {
       </div>
 
       {showLogout && <div onClick={() => setShowLogout(false)} style={{ position: "fixed", inset: 0, zIndex: 100 }} />}
-
       <audio ref={audioRef} src="/waka-waka.mp3" loop style={{ display: "none" }} />
     </div>
   );
