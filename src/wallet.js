@@ -5,7 +5,7 @@ const XLAYER_TESTNET = {
   chainId: `0x${CHAIN_ID.toString(16)}`,
   chainName: "X Layer Testnet",
   nativeCurrency: { name: "OKB", symbol: "OKB", decimals: 18 },
-  rpcUrls: ["https://testrpc.xlayer.tech"],
+  rpcUrls: ["https://xlayertestrpc.okx.com"],
   blockExplorerUrls: ["https://xlayer-testnet.blockscout.com"],
 };
 
