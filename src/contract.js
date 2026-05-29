@@ -5,7 +5,7 @@
 
 export const CONTRACT_ADDRESS = "0x7D96E5e3D8a188ce5472785BD442cdE7e12F3dF4";
 export const CHAIN_ID = 195;
-export const RPC_URL = "https://xlayertestrpc.okx.com";
+export const RPC_URL = "https://testrpc.xlayer.tech";
 
 export const ABI = [
   {
