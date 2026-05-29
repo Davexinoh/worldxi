@@ -6,13 +6,13 @@ const XLAYER_TESTNET = {
   chainName: "X Layer Testnet",
   nativeCurrency: { name: "OKB", symbol: "OKB", decimals: 18 },
   rpcUrls: ["https://xlayertestrpc.okx.com"],
-  blockExplorerUrls: ["https://xlayer-testnet.blockscout.com"],
+  blockExplorerUrls: ["https://www.oklink.com/xlayer-test"],
 };
 
 const getInjectedProvider = () => {
   if (typeof window === "undefined") throw new Error("Browser environment unavailable");
   const provider = window.okxwallet?.ethereum || window.ethereum;
-  if (!provider) throw new Error("No EVM wallet detected. Open inside OKX Wallet or install extension.");
+  if (!provider) throw new Error("No OKX wallet detected.install okx wallet extension.");
   return provider;
 };
 
