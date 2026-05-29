@@ -53,15 +53,12 @@ export default function SquadCard({ squad, findPlayerById, username, txHash, onC
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Top penalty box
+    // Penalty boxes
     ctx.strokeStyle = "rgba(255,255,255,0.05)";
     ctx.strokeRect(W * 0.2, 110, W * 0.6, 60);
-
-    // Bottom penalty box
     ctx.strokeRect(W * 0.2, H - 170, W * 0.6, 60);
 
-    // ── HEADER ──
-    // WorldXI title
+    // Header
     ctx.textAlign = "center";
     ctx.fillStyle = "#00E87A";
     ctx.font = "bold 32px Arial";
@@ -69,22 +66,19 @@ export default function SquadCard({ squad, findPlayerById, username, txHash, onC
 
     ctx.fillStyle = "rgba(255,255,255,0.25)";
     ctx.font = "10px Arial";
-    ctx.letterSpacing = "3px";
     ctx.fillText("ONCHAIN FANTASY FOOTBALL  •  WORLD CUP 2026", W / 2, 62);
 
-    // Divider
     ctx.beginPath();
     ctx.moveTo(40, 74); ctx.lineTo(W - 40, 74);
     ctx.strokeStyle = "rgba(0,232,122,0.2)";
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Manager name
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 16px Arial";
     ctx.fillText((username || "MANAGER").toUpperCase(), W / 2, 96);
 
-    // ── PLAYER ROWS ──
+    // Player rows
     const gk = squad.selectedPlayerIds.filter(id => findPlayerById(id)?.pos === "GK");
     const def = squad.selectedPlayerIds.filter(id => findPlayerById(id)?.pos === "DEF");
     const mid = squad.selectedPlayerIds.filter(id => findPlayerById(id)?.pos === "MID");
@@ -119,27 +113,17 @@ export default function SquadCard({ squad, findPlayerById, username, txHash, onC
       const cx = x - cardW / 2;
       const cy = y - cardH / 2;
 
-      // Card bg
-      ctx.fillStyle = isCaptain
-        ? "rgba(255,215,0,0.14)"
-        : `${posColor}20`;
+      // Card bg — no roundRect, use rect for compatibility
+      ctx.fillStyle = isCaptain ? "rgba(255,215,0,0.14)" : `${posColor}20`;
       ctx.beginPath();
-      if (ctx.roundRect) {
-        ctx.roundRect(cx, cy, cardW, cardH, 8);
-      } else {
-        ctx.rect(cx, cy, cardW, cardH);
-      }
+      ctx.rect(cx, cy, cardW, cardH);
       ctx.fill();
 
       // Card border
       ctx.strokeStyle = isCaptain ? "#FFD700" : isVice ? "#00E87A" : posColor;
       ctx.lineWidth = isCaptain ? 2 : 1;
       ctx.beginPath();
-      if (ctx.roundRect) {
-        ctx.roundRect(cx, cy, cardW, cardH, 8);
-      } else {
-        ctx.rect(cx, cy, cardW, cardH);
-      }
+      ctx.rect(cx, cy, cardW, cardH);
       ctx.stroke();
 
       // Flag
@@ -171,7 +155,7 @@ export default function SquadCard({ squad, findPlayerById, username, txHash, onC
       const shortName = lastName.length > 9 ? lastName.slice(0, 9) + "." : lastName;
       ctx.fillText(shortName, x, cy + (small ? 52 : 58));
 
-      // Pos
+      // Position
       ctx.fillStyle = posColor;
       ctx.font = `bold ${small ? 7 : 8}px Arial`;
       ctx.fillText(player.pos, x, cy + (small ? 63 : 71));
@@ -186,31 +170,19 @@ export default function SquadCard({ squad, findPlayerById, username, txHash, onC
       });
     });
 
-    // ── BENCH ──
-    const bench = squad.selectedPlayerIds.filter(id => !startingII.includes(id));
-
-    // fix: use startingXI not startingII
+    // Bench — fixed: use startingXI not startingII
     const benchPlayers = squad.selectedPlayerIds.filter(id => !startingXI.includes(id));
 
     if (benchPlayers.length > 0) {
-      // Bench bg
       ctx.fillStyle = "rgba(255,255,255,0.03)";
       ctx.beginPath();
-      if (ctx.roundRect) {
-        ctx.roundRect(16, 558, W - 32, 100, 10);
-      } else {
-        ctx.rect(16, 558, W - 32, 100);
-      }
+      ctx.rect(16, 558, W - 32, 100);
       ctx.fill();
 
       ctx.strokeStyle = "rgba(255,255,255,0.06)";
       ctx.lineWidth = 1;
       ctx.beginPath();
-      if (ctx.roundRect) {
-        ctx.roundRect(16, 558, W - 32, 100, 10);
-      } else {
-        ctx.rect(16, 558, W - 32, 100);
-      }
+      ctx.rect(16, 558, W - 32, 100);
       ctx.stroke();
 
       ctx.fillStyle = "rgba(255,255,255,0.2)";
@@ -224,7 +196,7 @@ export default function SquadCard({ squad, findPlayerById, username, txHash, onC
       });
     }
 
-    // ── FOOTER ──
+    // Footer
     ctx.fillStyle = "rgba(0,232,122,0.1)";
     ctx.fillRect(0, H - 82, W, 82);
 
@@ -275,7 +247,6 @@ export default function SquadCard({ squad, findPlayerById, username, txHash, onC
       padding: "16px 16px 32px", overflowY: "auto",
     }}>
       <div style={{ width: "100%", maxWidth: 440 }}>
-        {/* Header */}
         <div style={{
           display: "flex", justifyContent: "space-between",
           alignItems: "center", marginBottom: 12,
@@ -295,7 +266,6 @@ export default function SquadCard({ squad, findPlayerById, username, txHash, onC
           }}>✕</button>
         </div>
 
-        {/* Canvas */}
         <canvas
           ref={canvasRef}
           width={W}
@@ -307,7 +277,6 @@ export default function SquadCard({ squad, findPlayerById, username, txHash, onC
           }}
         />
 
-        {/* Buttons */}
         <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
           <button
             onClick={handleDownload}
@@ -336,7 +305,7 @@ export default function SquadCard({ squad, findPlayerById, username, txHash, onC
         </div>
 
         <div style={{ marginTop: 10, textAlign: "center", fontSize: 9, color: "rgba(255,255,255,0.15)" }}>
-          Card includes @PlayWorldXI and @XLayerOfficial tags
+          Tags @PlayWorldXI and @XLayerOfficial on share
         </div>
       </div>
     </div>
