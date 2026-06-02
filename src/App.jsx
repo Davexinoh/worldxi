@@ -759,12 +759,12 @@ function WorldXIAppInner() {
 }
 
 export default function App() {
-  const [showSplash, setShowSplash] = useState(() => !localStorage.getItem("worldxi_visited"));
+  const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem("worldxi_splash_shown"));
 
   const handleSplashDone = () => {
-    localStorage.setItem("worldxi_visited", "1");
-    setShowSplash(false);
-  };
+  sessionStorage.setItem("worldxi_splash_shown", "1");
+  setShowSplash(false);
+};
 
   return (
     <ErrorBoundary>
